@@ -1,0 +1,220 @@
+<!doctype html>
+<html><head><meta charset="utf-8"></head><body>
+<script>
+// Procedural wallpapers for the Pigeon Web store. Each painter draws onto a
+// W×H canvas with a seeded random generator so renders are reproducible.
+function rng(seed) {
+  return () => { seed |= 0; seed = (seed + 0x6D2B79F5) | 0; let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t; return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };
+}
+const lerp = (a, b, t) => a + (b - a) * t;
+function vgrad(ctx, H, stops) {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  stops.forEach(([o, c]) => g.addColorStop(o, c));
+  return g;
+}
+function stars(ctx, W, H, r, n, maxY) {
+  for (let i = 0; i < n; i++) {
+    const x = r() * W, y = r() * H * maxY, s = r() * r() * 2.6 * (W / 1920) + 0.4;
+    ctx.globalAlpha = 0.3 + r() * 0.7;
+    ctx.fillStyle = '#fff';
+    ctx.beginPath(); ctx.arc(x, y, s, 0, Math.PI * 2); ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+function glow(ctx, x, y, r, color) {
+  const g = ctx.createRadialGradient(x, y, 0, x, y, r);
+  g.addColorStop(0, color); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+}
+// A ridge line made by summing a few sine waves plus jitter.
+function ridge(W, base, amp, r, jag = 0.15) {
+  const waves = Array.from({ length: 4 }, () => ({ f: lerp(0.5, 4, r()) / W * Math.PI * 2, p: r() * 10, a: r() }));
+  const pts = [];
+  for (let x = 0; x <= W; x += W / 240) {
+    let y = 0;
+    for (const w of waves) y += Math.sin(x * w.f + w.p) * w.a;
+    pts.push([x, base - (y / 2) * amp - (r() - 0.5) * amp * jag]);
+  }
+  return pts;
+}
+function fillRidge(ctx, pts, W, H, fill) {
+  ctx.beginPath(); ctx.moveTo(0, H);
+  pts.forEach(([x, y]) => ctx.lineTo(x, y));
+  ctx.lineTo(W, H); ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+}
+
+const painters = {
+  aurora(ctx, W, H, r) {
+    ctx.fillStyle = vgrad(ctx, H, [[0, '#030611'], [0.55, '#0a1836'], [1, '#10284a']]);
+    ctx.fillRect(0, 0, W, H);
+    stars(ctx, W, H, r, 500, 0.8);
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.filter = `blur(${W / 400}px)`;
+    const bands = [['52,211,153', 0.30, 0.18], ['139,92,246', 0.40, 0.14], ['45,212,191', 0.22, 0.12]];
+    for (const [rgb, baseY, amp] of bands) {
+      const ph = r() * 10, f = lerp(1.5, 3, r());
+      for (let x = -40; x < W + 40; x += W / 700) {
+        const y = H * (baseY + Math.sin(x / W * Math.PI * f + ph) * amp * 0.5 + Math.sin(x / W * 13 + ph) * 0.015);
+        const h = H * lerp(0.12, 0.32, (Math.sin(x / W * 9 + ph * 2) + 1) / 2);
+        const g = ctx.createLinearGradient(0, y - h, 0, y + H * 0.02);
+        g.addColorStop(0, `rgba(${rgb},0)`); g.addColorStop(0.65, `rgba(${rgb},0.12)`); g.addColorStop(1, `rgba(${rgb},0.3)`);
+        ctx.fillStyle = g; ctx.fillRect(x, y - h, W / 500, h + H * 0.02);
+      }
+    }
+    ctx.filter = 'none'; ctx.globalCompositeOperation = 'source-over';
+    fillRidge(ctx, ridge(W, H * 0.86, H * 0.08, r), W, H, '#060a14');
+    fillRidge(ctx, ridge(W, H * 0.93, H * 0.05, r), W, H, '#02040a');
+  },
+
+  'sunset-dunes'(ctx, W, H, r) {
+    ctx.fillStyle = vgrad(ctx, H, [[0, '#24104f'], [0.35, '#7b2a7a'], [0.55, '#e0546b'], [0.7, '#ffb15e'], [1, '#ffd29a']]);
+    ctx.fillRect(0, 0, W, H);
+    glow(ctx, W * 0.68, H * 0.56, H * 0.55, 'rgba(255,214,140,.55)');
+    ctx.fillStyle = '#fff1c9'; ctx.beginPath(); ctx.arc(W * 0.68, H * 0.56, H * 0.1, 0, Math.PI * 2); ctx.fill();
+    const layers = ['#d9775f', '#b8525a', '#8c3a55', '#5e2747', '#36183a'];
+    layers.forEach((c, i) => {
+      const base = H * (0.62 + i * 0.085), amp = H * (0.07 + i * 0.015);
+      const pts = [];
+      const p = r() * 10, f = lerp(0.8, 1.8, r());
+      for (let x = 0; x <= W; x += W / 200) pts.push([x, base - Math.sin(x / W * Math.PI * f + p) * amp - Math.sin(x / W * 7 + p) * amp * 0.15]);
+      fillRidge(ctx, pts, W, H, c);
+    });
+  },
+
+  ocean(ctx, W, H, r) {
+    ctx.fillStyle = vgrad(ctx, H, [[0, '#0b1e3b'], [0.45, '#1d4e7a'], [0.5, '#2c7aa8'], [1, '#04121f']]);
+    ctx.fillRect(0, 0, W, H);
+    glow(ctx, W * 0.3, H * 0.28, H * 0.4, 'rgba(255,255,255,.25)');
+    ctx.fillStyle = '#f4f7ff'; ctx.beginPath(); ctx.arc(W * 0.3, H * 0.28, H * 0.06, 0, Math.PI * 2); ctx.fill();
+    stars(ctx, W, H, r, 400, 0.4);
+    for (let i = 0; i < 18; i++) {
+      const t = i / 17, base = H * lerp(0.5, 1.02, t * t), amp = H * lerp(0.004, 0.035, t);
+      const p = r() * 10, f = lerp(18, 6, t);
+      const pts = [];
+      for (let x = 0; x <= W; x += W / 300) pts.push([x, base + Math.sin(x / W * Math.PI * f + p) * amp]);
+      fillRidge(ctx, pts, W, H, `rgba(${Math.round(lerp(40, 4, t))},${Math.round(lerp(110, 30, t))},${Math.round(lerp(160, 55, t))},.55)`);
+    }
+    ctx.globalCompositeOperation = 'lighter';
+    for (let i = 0; i < 260; i++) {
+      const y = lerp(H * 0.5, H * 0.95, Math.pow(r(), 1.3)), spread = (y - H * 0.5) / H * W * 0.25 + W * 0.01;
+      const x = W * 0.3 + (r() - 0.5) * spread * 2, w = lerp(4, 40, r()) * (W / 1920);
+      ctx.fillStyle = `rgba(255,255,255,${lerp(0.04, 0.22, r())})`;
+      ctx.fillRect(x, y, w, Math.max(1, H / 900));
+    }
+    ctx.globalCompositeOperation = 'source-over';
+  },
+
+  'pigeon-sky'(ctx, W, H, r) {
+    ctx.fillStyle = vgrad(ctx, H, [[0, '#7fb2f0'], [0.6, '#bcdcf7'], [1, '#f3e4f1']]);
+    ctx.fillRect(0, 0, W, H);
+    ctx.filter = `blur(${W / 300}px)`;
+    for (let c = 0; c < 9; c++) {
+      const cx = r() * W, cy = lerp(H * 0.15, H * 0.9, r()), s = lerp(0.6, 1.6, r()) * W / 1920;
+      ctx.fillStyle = `rgba(255,255,255,${lerp(0.5, 0.85, r())})`;
+      for (let k = 0; k < 14; k++) {
+        ctx.beginPath();
+        ctx.arc(cx + (r() - 0.5) * 420 * s, cy + (r() - 0.5) * 70 * s, lerp(40, 110, r()) * s, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
+    ctx.filter = 'none';
+    // a loose flock of birds in flight
+    const fx = W * 0.62, fy = H * 0.34;
+    for (let i = 0; i < 26; i++) {
+      const x = fx + (r() - 0.35) * W * 0.5, y = fy + (r() - 0.5) * H * 0.35;
+      const s = lerp(14, 46, r() * r()) * (W / 1920), flap = lerp(0.2, 0.9, r());
+      ctx.save(); ctx.translate(x, y); ctx.rotate((r() - 0.5) * 0.4);
+      ctx.fillStyle = `rgba(52,62,92,${lerp(0.55, 0.9, s / (46 * W / 1920))})`;
+      ctx.beginPath();
+      ctx.moveTo(-s, -s * flap);
+      ctx.quadraticCurveTo(-s * 0.45, -s * 0.15, 0, 0);
+      ctx.quadraticCurveTo(s * 0.45, -s * 0.15, s, -s * flap);
+      ctx.quadraticCurveTo(s * 0.4, s * 0.12, 0, s * 0.18);
+      ctx.quadraticCurveTo(-s * 0.4, s * 0.12, -s, -s * flap);
+      ctx.fill();
+      ctx.restore();
+    }
+  },
+
+  'neon-grid'(ctx, W, H, r) {
+    ctx.fillStyle = vgrad(ctx, H, [[0, '#0c0221'], [0.55, '#2b0b52'], [0.62, '#120327'], [1, '#05010d']]);
+    ctx.fillRect(0, 0, W, H);
+    stars(ctx, W, H, r, 500, 0.5);
+    const sx = W / 2, sy = H * 0.5, sr = H * 0.22;
+    glow(ctx, sx, sy, sr * 2.2, 'rgba(255,60,172,.35)');
+    ctx.save();
+    ctx.beginPath(); ctx.arc(sx, sy, sr, 0, Math.PI * 2); ctx.clip();
+    const sg = ctx.createLinearGradient(0, sy - sr, 0, sy + sr);
+    sg.addColorStop(0, '#ffe66d'); sg.addColorStop(0.55, '#ff7aa2'); sg.addColorStop(1, '#ff2fb2');
+    ctx.fillStyle = sg; ctx.fillRect(sx - sr, sy - sr, sr * 2, sr * 2);
+    ctx.fillStyle = '#1a0538';
+    for (let i = 0; i < 7; i++) { const y = sy + sr * (0.1 + i * 0.13); ctx.fillRect(sx - sr, y, sr * 2, sr * (0.02 + i * 0.012)); }
+    ctx.restore();
+    fillRidge(ctx, ridge(W, H * 0.6, H * 0.12, r, 0.4), W, H, '#25084a');
+    ctx.fillStyle = '#0b0219'; ctx.fillRect(0, H * 0.6, W, H * 0.4);
+    ctx.strokeStyle = 'rgba(255,47,178,.75)'; ctx.lineWidth = Math.max(2, W / 1300);
+    ctx.shadowColor = '#ff2fb2'; ctx.shadowBlur = W / 200;
+    for (let i = 0; i < 22; i++) { const t = Math.pow(i / 21, 2.2); const y = lerp(H * 0.6, H, t); ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); }
+    for (let i = -20; i <= 20; i++) { ctx.beginPath(); ctx.moveTo(W / 2 + i * W * 0.012, H * 0.6); ctx.lineTo(W / 2 + i * W * 0.11, H); ctx.stroke(); }
+    ctx.shadowBlur = 0;
+  },
+
+  'night-mountains'(ctx, W, H, r) {
+    ctx.fillStyle = vgrad(ctx, H, [[0, '#070b1d'], [0.6, '#1b2550'], [1, '#2d3568']]);
+    ctx.fillRect(0, 0, W, H);
+    stars(ctx, W, H, r, 550, 0.6);
+    glow(ctx, W * 0.78, H * 0.22, H * 0.35, 'rgba(200,210,255,.28)');
+    ctx.fillStyle = '#f2f3ff'; ctx.beginPath(); ctx.arc(W * 0.78, H * 0.22, H * 0.055, 0, Math.PI * 2); ctx.fill();
+    const cols = ['#3c4a82', '#2c376a', '#1f2852', '#141b3b', '#0a0f24'];
+    cols.forEach((c, i) => {
+      // peaks: a few triangle-ish summits smoothed by a sine wobble
+      const base = H * (0.52 + i * 0.1), amp = H * (0.2 - i * 0.025);
+      const peaks = Array.from({ length: 4 + i }, () => [r() * W, lerp(0.5, 1, r()) * amp, lerp(0.12, 0.25, r()) * W]);
+      const pts = [];
+      for (let x = 0; x <= W; x += W / 400) {
+        let y = 0;
+        for (const [px, ph, pw] of peaks) y = Math.max(y, ph * Math.max(0, 1 - Math.abs(x - px) / pw));
+        pts.push([x, base - y - Math.sin(x / W * 40 + i) * H * 0.004]);
+      }
+      fillRidge(ctx, pts, W, H, c);
+      const mist = ctx.createLinearGradient(0, H * (0.48 + i * 0.1), 0, H * (0.62 + i * 0.1));
+      mist.addColorStop(0, 'rgba(160,175,230,0)'); mist.addColorStop(1, 'rgba(160,175,230,.10)');
+      ctx.fillStyle = mist; ctx.fillRect(0, H * (0.48 + i * 0.1), W, H * 0.14);
+    });
+  },
+
+  'misty-forest'(ctx, W, H, r) {
+    ctx.fillStyle = vgrad(ctx, H, [[0, '#cfd9d2'], [0.5, '#9fb5a8'], [1, '#4b6458']]);
+    ctx.fillRect(0, 0, W, H);
+    glow(ctx, W * 0.4, H * 0.3, H * 0.6, 'rgba(255,248,225,.45)');
+    const layers = [['#8aa596', 0.48], ['#6f8c7d', 0.58], ['#536f62', 0.68], ['#3a5248', 0.79], ['#22332c', 0.92]];
+    layers.forEach(([c, baseF], i) => {
+      ctx.fillStyle = c;
+      const base = H * baseF, scale = (0.5 + i * 0.3) * (H / 1080);
+      ctx.fillRect(0, base, W, H - base);
+      for (let x = -40; x < W + 40; x += lerp(18, 40, r()) * scale) {
+        const th = lerp(90, 220, r()) * scale, tw = th * lerp(0.28, 0.36, r());
+        ctx.beginPath();
+        for (let k = 0; k < 4; k++) {
+          const y0 = base - th * (k / 4), w = tw * (1 - k * 0.18);
+          ctx.moveTo(x - w / 2, y0 + th * 0.08); ctx.lineTo(x, y0 - th * 0.38); ctx.lineTo(x + w / 2, y0 + th * 0.08);
+        }
+        ctx.fill();
+      }
+      const fog = ctx.createLinearGradient(0, base - H * 0.12, 0, base + H * 0.08);
+      fog.addColorStop(0, 'rgba(225,235,228,0)'); fog.addColorStop(1, `rgba(225,235,228,${0.32 - i * 0.05})`);
+      ctx.fillStyle = fog; ctx.fillRect(0, base - H * 0.12, W, H * 0.2);
+    });
+  }
+};
+
+window.render = (name, W, H, seed) => {
+  const c = document.createElement('canvas');
+  c.width = W; c.height = H;
+  painters[name](c.getContext('2d'), W, H, rng(seed));
+  return c;
+};
+window.names = Object.keys(painters);
+</script>
+</body></html>

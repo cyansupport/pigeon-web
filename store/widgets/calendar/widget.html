@@ -1,0 +1,77 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --fg: #eceef5; --muted: #9aa0b4; --accent: #9b8cff; --hover: rgba(255,255,255,.08); }
+  .light { --fg: #1d2030; --muted: #5d6478; --hover: rgba(0,0,0,.06); }
+  html, body { margin: 0; height: 100%; background: transparent; color: var(--fg); overflow: hidden;
+    font: 12px/1 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; user-select: none; }
+  body { box-sizing: border-box; padding: 10px 12px; display: flex; flex-direction: column; gap: 6px; }
+  .head { display: flex; align-items: center; justify-content: space-between; }
+  .month { font-weight: 700; font-size: 13px; }
+  .month::first-letter { text-transform: uppercase; }
+  .nav button { width: 22px; height: 22px; border: 0; border-radius: 6px; background: none; color: var(--muted); cursor: pointer; font-size: 14px; }
+  .nav button:hover { background: var(--hover); color: var(--fg); }
+  .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; flex: 1; align-content: start; }
+  .grid div { display: grid; place-items: center; height: 19px; border-radius: 6px; font-variant-numeric: tabular-nums; }
+  .wd { color: var(--muted); font-size: 10.5px; text-transform: uppercase; }
+  .other { color: var(--muted); opacity: .45; }
+  .today { background: var(--accent); color: #fff; font-weight: 700; }
+</style>
+</head>
+<body>
+  <div class="head">
+    <span class="month" id="month"></span>
+    <span class="nav"><button id="prev">‹</button><button id="next">›</button></span>
+  </div>
+  <div class="grid" id="grid"></div>
+<script>
+const W = { lang: 'en', send(m) { parent.postMessage(Object.assign({ pigeonWidget: true }, m), '*'); } };
+let view = new Date();
+view.setDate(1);
+
+function firstWeekday(lang) {
+  try {
+    const info = new Intl.Locale(lang).weekInfo || new Intl.Locale(lang).getWeekInfo?.();
+    if (info && info.firstDay) return info.firstDay % 7;
+  } catch { /* older engines */ }
+  return lang === 'en' || lang === 'pt' ? 0 : 1;
+}
+
+function render() {
+  const lang = W.lang;
+  const start = firstWeekday(lang);
+  document.getElementById('month').textContent = view.toLocaleDateString(lang, { month: 'long', year: 'numeric' });
+  const grid = document.getElementById('grid');
+  grid.replaceChildren();
+  const base = new Date(2024, 0, 7); // a Sunday
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(base); d.setDate(base.getDate() + ((start + i) % 7));
+    grid.append(Object.assign(document.createElement('div'), { className: 'wd', textContent: d.toLocaleDateString(lang, { weekday: 'narrow' }) }));
+  }
+  const offset = (view.getDay() - start + 7) % 7;
+  const first = new Date(view); first.setDate(1 - offset);
+  const today = new Date().toDateString();
+  for (let i = 0; i < 42; i++) {
+    const d = new Date(first); d.setDate(first.getDate() + i);
+    if (i >= 35 && d.getMonth() !== view.getMonth()) break;
+    const cls = [d.getMonth() !== view.getMonth() ? 'other' : '', d.toDateString() === today ? 'today' : ''].join(' ');
+    grid.append(Object.assign(document.createElement('div'), { className: cls, textContent: d.getDate() }));
+  }
+}
+document.getElementById('prev').addEventListener('click', () => { view.setMonth(view.getMonth() - 1); render(); });
+document.getElementById('next').addEventListener('click', () => { view.setMonth(view.getMonth() + 1); render(); });
+addEventListener('message', (e) => {
+  const m = e.data;
+  if (!m || !m.pigeonHost || m.type !== 'init') return;
+  W.lang = m.lang || 'en';
+  document.documentElement.classList.toggle('light', m.theme === 'light');
+  if (m.accent) document.documentElement.style.setProperty('--accent', m.accent);
+  render();
+});
+render();
+W.send({ type: 'ready' });
+</script>
+</body>
+</html>

@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --fg: #eceef5; --muted: #9aa0b4; --accent: #9b8cff; --line: rgba(255,255,255,.1); }
+  .light { --fg: #1d2030; --muted: #5d6478; --line: rgba(0,0,0,.08); }
+  html, body { margin: 0; height: 100%; background: transparent; color: var(--fg); overflow: hidden;
+    font: 13.5px/1.4 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+  body { box-sizing: border-box; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+  .head { display: flex; justify-content: space-between; font-weight: 700; font-size: 13px; }
+  .count { color: var(--muted); font-weight: 400; }
+  ul { list-style: none; margin: 0; padding: 0; overflow-y: auto; flex: 1; }
+  li { display: flex; align-items: center; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--line); }
+  li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  li.done span { text-decoration: line-through; color: var(--muted); }
+  input[type=checkbox] { accent-color: var(--accent); width: 15px; height: 15px; margin: 0; cursor: pointer; }
+  .x { border: 0; background: none; color: var(--muted); cursor: pointer; font-size: 15px; opacity: 0; }
+  li:hover .x { opacity: 1; }
+  form input { width: 100%; box-sizing: border-box; border: 0; border-bottom: 1px solid var(--line); background: transparent;
+    color: var(--fg); font: inherit; padding: 4px 0; outline: none; }
+  form input:focus { border-color: var(--accent); }
+  form input::placeholder { color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="head"><span id="title"></span><span class="count" id="count"></span></div>
+  <ul id="list"></ul>
+  <form id="form"><input id="new" maxlength="120" autocomplete="off"></form>
+<script>
+const T = {
+  en: { title: '✅ To-do', add: 'Add a task and press Enter', left: '{n} left' },
+  pl: { title: '✅ Do zrobienia', add: 'Dodaj zadanie i naciśnij Enter', left: 'zostało: {n}' },
+  de: { title: '✅ Aufgaben', add: 'Aufgabe eingeben und Enter drücken', left: '{n} offen' },
+  es: { title: '✅ Tareas', add: 'Escribe una tarea y pulsa Intro', left: 'quedan {n}' },
+  fr: { title: '✅ À faire', add: 'Ajoutez une tâche puis Entrée', left: '{n} restante(s)' },
+  pt: { title: '✅ Tarefas', add: 'Adicione uma tarefa e tecle Enter', left: 'faltam {n}' }
+};
+const W = {
+  cfg: {}, lang: 'en',
+  send(m) { parent.postMessage(Object.assign({ pigeonWidget: true }, m), '*'); },
+  save(cfg) { this.cfg = cfg; this.send({ type: 'save', config: cfg }); },
+  t(k) { return (T[this.lang] || T.en)[k] || T.en[k]; }
+};
+const list = document.getElementById('list');
+let items = [];
+function persist() { W.save({ items }); render(); }
+function render() {
+  list.replaceChildren(...items.map((it, i) => {
+    const li = document.createElement('li');
+    li.className = it.done ? 'done' : '';
+    const box = Object.assign(document.createElement('input'), { type: 'checkbox', checked: it.done });
+    box.addEventListener('change', () => { items[i].done = box.checked; persist(); });
+    const label = Object.assign(document.createElement('span'), { textContent: it.text, title: it.text });
+    const x = Object.assign(document.createElement('button'), { className: 'x', textContent: '×' });
+    x.addEventListener('click', () => { items.splice(i, 1); persist(); });
+    li.append(box, label, x);
+    return li;
+  }));
+  const left = items.filter((x) => !x.done).length;
+  document.getElementById('count').textContent = items.length ? W.t('left').replace('{n}', left) : '';
+}
+addEventListener('message', (e) => {
+  const m = e.data;
+  if (!m || !m.pigeonHost || m.type !== 'init') return;
+  W.cfg = m.config || {};
+  W.lang = m.lang || 'en';
+  document.documentElement.classList.toggle('light', m.theme === 'light');
+  if (m.accent) document.documentElement.style.setProperty('--accent', m.accent);
+  document.getElementById('title').textContent = W.t('title');
+  document.getElementById('new').placeholder = W.t('add');
+  items = Array.isArray(W.cfg.items) ? W.cfg.items : [];
+  render();
+});
+document.getElementById('form').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const input = document.getElementById('new');
+  const text = input.value.trim();
+  if (!text || items.length >= 50) return;
+  items.push({ text, done: false });
+  input.value = '';
+  persist();
+  list.scrollTop = list.scrollHeight;
+});
+W.send({ type: 'ready' });
+</script>
+</body>
+</html>

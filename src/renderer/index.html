@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src * data: blob:; style-src 'self' 'unsafe-inline'; script-src 'self'">
+  <title>Pigeon Web</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header id="titlebar">
+    <img class="brand" src="../pages/pigeon.svg" alt="Pigeon Web">
+    <div id="tabs"></div>
+    <button id="new-tab" class="icon-btn small" title="New tab (Ctrl+T)" data-i18n-title="newTabTip">
+      <svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+    <div class="drag-spacer"></div>
+  </header>
+
+  <nav id="toolbar">
+    <button id="back" class="icon-btn" title="Back (Alt+Left)" data-i18n-title="backTip"><svg viewBox="0 0 24 24"><path d="M15 18l-6-6 6-6"/></svg></button>
+    <button id="forward" class="icon-btn" title="Forward (Alt+Right)" data-i18n-title="forwardTip"><svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg></button>
+    <button id="reload" class="icon-btn" title="Reload (Ctrl+R)"></button>
+    <button id="home" class="icon-btn" title="Home (Alt+Home)" data-i18n-title="homeTip"><svg viewBox="0 0 24 24"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h5v-6h4v6h5V10"/></svg></button>
+
+    <div id="omnibox">
+      <span id="site-icon"></span>
+      <input id="address" spellcheck="false" autocomplete="off" placeholder="Search or enter address">
+      <button id="zoom-badge" title="Reset zoom" data-i18n-title="resetZoomTip" hidden></button>
+      <button id="star" class="icon-btn small" title="Bookmark this page (Ctrl+D)">
+        <svg viewBox="0 0 24 24"><path d="M12 3l2.8 5.7 6.2.9-4.5 4.4 1.1 6.2L12 17.3l-5.6 2.9 1.1-6.2L3 9.6l6.2-.9z"/></svg>
+      </button>
+      <div id="suggestions" hidden></div>
+    </div>
+
+    <button id="shield" class="icon-btn" title="Tracker blocker">
+      <svg viewBox="0 0 24 24"><path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/></svg>
+      <span class="badge" hidden></span>
+    </button>
+    <button id="downloads-btn" class="icon-btn" title="Downloads (Ctrl+J)" data-i18n-title="downloadsTip" hidden>
+      <svg viewBox="0 0 24 24"><path d="M12 3v12M7 10l5 5 5-5M5 21h14"/></svg>
+      <span class="badge" hidden></span>
+    </button>
+    <button id="panel-btn" class="icon-btn" title="History &amp; bookmarks (Ctrl+H)" data-i18n-title="panelTip">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+    </button>
+    <button id="update-btn" class="update-pill" hidden>
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 16V8M8.5 11.5L12 8l3.5 3.5"/></svg>
+      <span data-i18n="updateBtn">Update</span>
+    </button>
+    <button id="menu-btn" class="icon-btn" title="Menu" data-i18n-title="menuTip">
+      <svg viewBox="0 0 24 24"><circle cx="12" cy="5" r="1.3"/><circle cx="12" cy="12" r="1.3"/><circle cx="12" cy="19" r="1.3"/></svg>
+    </button>
+  </nav>
+
+  <div id="bookmarks-bar"></div>
+
+  <main id="main">
+    <div id="views">
+      <div id="error-page" hidden>
+        <img src="../pages/pigeon.svg" alt="">
+        <h1 data-i18n="errTitle">This page got lost on the way</h1>
+        <p id="error-text"></p>
+        <code id="error-code"></code>
+        <button id="error-retry" class="btn" data-i18n="tryAgain">Try again</button>
+      </div>
+      <div id="findbar" hidden>
+        <input id="find-input" placeholder="Find in page" data-i18n-placeholder="findPlaceholder" spellcheck="false">
+        <span id="find-count"></span>
+        <button id="find-prev" class="icon-btn small" title="Previous (Shift+Enter)" data-i18n-title="findPrevTip"><svg viewBox="0 0 24 24"><path d="M18 15l-6-6-6 6"/></svg></button>
+        <button id="find-next" class="icon-btn small" title="Next (Enter)" data-i18n-title="findNextTip"><svg viewBox="0 0 24 24"><path d="M6 9l6 6 6-6"/></svg></button>
+        <button id="find-close" class="icon-btn small" title="Close (Esc)" data-i18n-title="findCloseTip"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+    </div>
+    <aside id="panel" hidden>
+      <div class="panel-head">
+        <div class="seg">
+          <button data-panel="history" data-i18n="history">History</button>
+          <button data-panel="bookmarks" data-i18n="bookmarks">Bookmarks</button>
+          <button data-panel="downloads" data-i18n="downloads">Downloads</button>
+          <button data-panel="passwords" data-i18n="passwords">Passwords</button>
+        </div>
+        <button id="panel-close" class="icon-btn small" title="Close panel" data-i18n-title="closePanelTip"><svg viewBox="0 0 24 24"><path d="M18 6L6 18M6 6l12 12"/></svg></button>
+      </div>
+      <div id="panel-body"></div>
+    </aside>
+  </main>
+
+  <div id="popover" hidden></div>
+  <div id="modal-backdrop" hidden><div id="modal" role="dialog" aria-modal="true"></div></div>
+  <div id="toast" hidden></div>
+  <script src="../pages/i18n.js"></script>
+  <script src="renderer.js"></script>
+</body>
+</html>

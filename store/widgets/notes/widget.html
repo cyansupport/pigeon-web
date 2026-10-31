@@ -1,0 +1,63 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --fg: #eceef5; --muted: #9aa0b4; --accent: #9b8cff; }
+  .light { --fg: #1d2030; --muted: #5d6478; }
+  html, body { margin: 0; height: 100%; background: transparent; color: var(--fg); overflow: hidden;
+    font: 14px/1.5 "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; }
+  body { box-sizing: border-box; padding: 12px 14px; display: flex; flex-direction: column; gap: 4px; }
+  .head { display: flex; justify-content: space-between; align-items: center; font-weight: 700; font-size: 13px; }
+  .saved { color: var(--muted); font-weight: 400; font-size: 11.5px; opacity: 0; transition: opacity .3s; }
+  .saved.show { opacity: 1; }
+  textarea { flex: 1; width: 100%; resize: none; border: 0; outline: none; background: transparent; color: var(--fg);
+    font: inherit; padding: 0; }
+  textarea::placeholder { color: var(--muted); }
+</style>
+</head>
+<body>
+  <div class="head"><span id="title"></span><span class="saved" id="saved"></span></div>
+  <textarea id="text" spellcheck="true"></textarea>
+<script>
+const T = {
+  en: { title: '📝 Notes', placeholder: 'Write something…', saved: 'Saved' },
+  pl: { title: '📝 Notatki', placeholder: 'Napisz coś…', saved: 'Zapisano' },
+  de: { title: '📝 Notizen', placeholder: 'Schreib etwas…', saved: 'Gespeichert' },
+  es: { title: '📝 Notas', placeholder: 'Escribe algo…', saved: 'Guardado' },
+  fr: { title: '📝 Notes', placeholder: 'Écrivez quelque chose…', saved: 'Enregistré' },
+  pt: { title: '📝 Notas', placeholder: 'Escreva algo…', saved: 'Salvo' }
+};
+const W = {
+  cfg: {}, lang: 'en',
+  send(m) { parent.postMessage(Object.assign({ pigeonWidget: true }, m), '*'); },
+  save(cfg) { this.cfg = cfg; this.send({ type: 'save', config: cfg }); },
+  t(k) { return (T[this.lang] || T.en)[k] || T.en[k]; }
+};
+const text = document.getElementById('text');
+const saved = document.getElementById('saved');
+addEventListener('message', (e) => {
+  const m = e.data;
+  if (!m || !m.pigeonHost || m.type !== 'init') return;
+  W.cfg = m.config || {};
+  W.lang = m.lang || 'en';
+  document.documentElement.classList.toggle('light', m.theme === 'light');
+  if (m.accent) document.documentElement.style.setProperty('--accent', m.accent);
+  document.getElementById('title').textContent = W.t('title');
+  text.placeholder = W.t('placeholder');
+  saved.textContent = W.t('saved');
+  text.value = W.cfg.text || '';
+});
+let timer;
+text.addEventListener('input', () => {
+  clearTimeout(timer);
+  timer = setTimeout(() => {
+    W.save({ text: text.value.slice(0, 20000) });
+    saved.classList.add('show');
+    setTimeout(() => saved.classList.remove('show'), 1200);
+  }, 500);
+});
+W.send({ type: 'ready' });
+</script>
+</body>
+</html>

@@ -1,0 +1,123 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --fg: #eceef5; --muted: #9aa0b4; --accent: #9b8cff; --line: rgba(255,255,255,.12); --field: rgba(255,255,255,.08); }
+  .light { --fg: #1d2030; --muted: #5d6478; --line: rgba(0,0,0,.1); --field: rgba(0,0,0,.05); }
+  html, body { margin: 0; height: 100%; background: transparent; color: var(--fg); overflow: hidden;
+    font: 14px/1.3 "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; }
+  body { box-sizing: border-box; padding: 14px 16px; display: flex; flex-direction: column; }
+  .city { font-weight: 700; font-size: 14px; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .city:hover { color: var(--accent); }
+  .now { display: flex; align-items: center; gap: 10px; margin: 6px 0 4px; }
+  .now .icon { font-size: 40px; line-height: 1; }
+  .now .temp { font-size: 40px; font-weight: 700; letter-spacing: -.03em; }
+  .desc { color: var(--muted); font-size: 12.5px; }
+  .days { display: flex; justify-content: space-between; margin-top: auto; padding-top: 8px; border-top: 1px solid var(--line); }
+  .day { text-align: center; font-size: 12px; color: var(--muted); }
+  .day b { display: block; color: var(--fg); font-weight: 600; }
+  form { margin: auto 0; display: flex; flex-direction: column; gap: 8px; }
+  input { height: 34px; border: 1px solid var(--line); border-radius: 10px; background: var(--field); color: var(--fg);
+    padding: 0 12px; font: inherit; outline: none; }
+  input:focus { border-color: var(--accent); }
+  button { height: 32px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font: 600 13px inherit; font-family: inherit; cursor: pointer; }
+  .msg { color: var(--muted); font-size: 12px; min-height: 14px; }
+</style>
+</head>
+<body>
+<script>
+const T = {
+  en: { city: 'Your city', set: 'Show weather', notFound: 'City not found', error: 'Weather unavailable', change: 'Click to change city', codes: ['Clear', 'Partly cloudy', 'Fog', 'Drizzle', 'Rain', 'Snow', 'Showers', 'Thunderstorm'] },
+  pl: { city: 'Twoje miasto', set: 'Pokaż pogodę', notFound: 'Nie znaleziono miasta', error: 'Pogoda niedostępna', change: 'Kliknij, aby zmienić miasto', codes: ['Bezchmurnie', 'Częściowe zachmurzenie', 'Mgła', 'Mżawka', 'Deszcz', 'Śnieg', 'Przelotne opady', 'Burza'] },
+  de: { city: 'Deine Stadt', set: 'Wetter anzeigen', notFound: 'Stadt nicht gefunden', error: 'Wetter nicht verfügbar', change: 'Klicken, um die Stadt zu ändern', codes: ['Klar', 'Teilweise bewölkt', 'Nebel', 'Nieselregen', 'Regen', 'Schnee', 'Schauer', 'Gewitter'] },
+  es: { city: 'Tu ciudad', set: 'Ver el tiempo', notFound: 'Ciudad no encontrada', error: 'Tiempo no disponible', change: 'Haz clic para cambiar de ciudad', codes: ['Despejado', 'Parcialmente nublado', 'Niebla', 'Llovizna', 'Lluvia', 'Nieve', 'Chubascos', 'Tormenta'] },
+  fr: { city: 'Votre ville', set: 'Voir la météo', notFound: 'Ville introuvable', error: 'Météo indisponible', change: 'Cliquez pour changer de ville', codes: ['Dégagé', 'Partiellement nuageux', 'Brouillard', 'Bruine', 'Pluie', 'Neige', 'Averses', 'Orage'] },
+  pt: { city: 'Sua cidade', set: 'Ver o tempo', notFound: 'Cidade não encontrada', error: 'Tempo indisponível', change: 'Clique para mudar a cidade', codes: ['Limpo', 'Parcialmente nublado', 'Neblina', 'Garoa', 'Chuva', 'Neve', 'Pancadas', 'Trovoada'] }
+};
+const W = {
+  cfg: {}, lang: 'en',
+  send(m) { parent.postMessage(Object.assign({ pigeonWidget: true }, m), '*'); },
+  save(cfg) { this.cfg = cfg; this.send({ type: 'save', config: cfg }); },
+  t(k) { return (T[this.lang] || T.en)[k] || T.en[k]; }
+};
+addEventListener('message', (e) => {
+  const m = e.data;
+  if (!m || !m.pigeonHost || m.type !== 'init') return;
+  W.cfg = m.config || {};
+  W.lang = m.lang || 'en';
+  document.documentElement.classList.toggle('light', m.theme === 'light');
+  if (m.accent) document.documentElement.style.setProperty('--accent', m.accent);
+  W.cfg.lat != null ? showWeather() : askCity();
+});
+
+// WMO weather codes -> [icon, index into the translated "codes" list]
+function describe(code) {
+  if (code === 0) return ['☀️', 0];
+  if (code <= 3) return ['⛅', 1];
+  if (code <= 48) return ['🌫️', 2];
+  if (code <= 57) return ['🌦️', 3];
+  if (code <= 67) return ['🌧️', 4];
+  if (code <= 77) return ['❄️', 5];
+  if (code <= 86) return ['🌦️', 6];
+  return ['⛈️', 7];
+}
+
+function el(tag, props = {}, ...kids) {
+  const n = Object.assign(document.createElement(tag), props);
+  n.append(...kids);
+  return n;
+}
+
+function askCity(message = '') {
+  const input = el('input', { placeholder: W.t('city'), value: W.cfg.city || '' });
+  const msg = el('div', { className: 'msg', textContent: message });
+  const form = el('form', {}, input, el('button', { type: 'submit', textContent: W.t('set') }), msg);
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const q = input.value.trim();
+    if (!q) return;
+    try {
+      const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?count=1&language=${W.lang}&name=${encodeURIComponent(q)}`).then((x) => x.json());
+      const place = r.results && r.results[0];
+      if (!place) { msg.textContent = W.t('notFound'); return; }
+      W.save({ city: place.name, lat: place.latitude, lon: place.longitude });
+      showWeather();
+    } catch { msg.textContent = W.t('error'); }
+  });
+  document.body.replaceChildren(form);
+  input.focus();
+}
+
+let refresh;
+async function showWeather() {
+  clearTimeout(refresh);
+  refresh = setTimeout(showWeather, 30 * 60e3);
+  const { lat, lon, city } = W.cfg;
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
+      '&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4';
+    const d = await fetch(url).then((x) => x.json());
+    const [icon, idx] = describe(d.current.weather_code);
+    const cityEl = el('div', { className: 'city', textContent: city, title: W.t('change') });
+    cityEl.addEventListener('click', () => askCity());
+    const days = el('div', { className: 'days' });
+    for (let i = 1; i < d.daily.time.length; i++) {
+      const name = new Date(d.daily.time[i] + 'T12:00').toLocaleDateString(W.lang, { weekday: 'short' });
+      days.append(el('div', { className: 'day' }, name, el('b', { textContent: describe(d.daily.weather_code[i])[0] }),
+        `${Math.round(d.daily.temperature_2m_max[i])}° / ${Math.round(d.daily.temperature_2m_min[i])}°`));
+    }
+    document.body.replaceChildren(
+      cityEl,
+      el('div', { className: 'now' }, el('span', { className: 'icon', textContent: icon }),
+        el('span', { className: 'temp', textContent: `${Math.round(d.current.temperature_2m)}°` })),
+      el('div', { className: 'desc', textContent: W.t('codes')[idx] }),
+      days);
+  } catch {
+    askCity(W.t('error'));
+  }
+}
+W.send({ type: 'ready' });
+</script>
+</body>
+</html>

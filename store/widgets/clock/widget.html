@@ -1,0 +1,72 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --fg: #eceef5; --muted: #9aa0b4; --accent: #9b8cff; }
+  .light { --fg: #1d2030; --muted: #5d6478; }
+  html, body { margin: 0; height: 100%; background: transparent; color: var(--fg); overflow: hidden;
+    font: 14px/1.3 "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; user-select: none; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; cursor: pointer; }
+  .time { font-size: 54px; font-weight: 700; letter-spacing: -.03em; font-variant-numeric: tabular-nums; line-height: 1; }
+  .time small { font-size: 20px; color: var(--accent); margin-left: 4px; font-weight: 600; }
+  .date { color: var(--muted); font-size: 14px; }
+  .date::first-letter { text-transform: uppercase; }
+  .hint { position: absolute; bottom: 8px; font-size: 11px; color: var(--muted); opacity: 0; transition: opacity .2s; }
+  body:hover .hint { opacity: .8; }
+</style>
+</head>
+<body>
+  <div class="time" id="time"></div>
+  <div class="date" id="date"></div>
+  <div class="hint" id="hint"></div>
+<script>
+const T = {
+  en: { hint: 'Click to switch 12/24h' }, pl: { hint: 'Kliknij, aby zmienić 12/24 h' },
+  de: { hint: 'Klicken für 12/24 Std.' }, es: { hint: 'Clic para cambiar 12/24 h' },
+  fr: { hint: 'Cliquez pour passer en 12/24 h' }, pt: { hint: 'Clique para alternar 12/24 h' }
+};
+const W = {
+  cfg: {}, lang: 'en',
+  send(m) { parent.postMessage(Object.assign({ pigeonWidget: true }, m), '*'); },
+  save(cfg) { this.cfg = cfg; this.send({ type: 'save', config: cfg }); },
+  t(k) { return (T[this.lang] || T.en)[k] || T.en[k]; }
+};
+addEventListener('message', (e) => {
+  const m = e.data;
+  if (!m || !m.pigeonHost || m.type !== 'init') return;
+  W.cfg = m.config || {};
+  W.lang = m.lang || 'en';
+  document.documentElement.classList.toggle('light', m.theme === 'light');
+  if (m.accent) document.documentElement.style.setProperty('--accent', m.accent);
+  start();
+});
+
+let timer;
+function render() {
+  const now = new Date();
+  const h12 = !!W.cfg.h12;
+  const parts = new Intl.DateTimeFormat(W.lang, { hour: 'numeric', minute: '2-digit', hour12: h12 }).formatToParts(now);
+  const main = parts.filter((p) => p.type !== 'dayPeriod').map((p) => p.value).join('').trim();
+  const period = parts.find((p) => p.type === 'dayPeriod');
+  document.getElementById('time').innerHTML = '';
+  document.getElementById('time').append(main);
+  if (period) {
+    const s = document.createElement('small');
+    s.textContent = period.value;
+    document.getElementById('time').append(s);
+  }
+  document.getElementById('date').textContent =
+    now.toLocaleDateString(W.lang, { weekday: 'long', day: 'numeric', month: 'long' });
+}
+function start() {
+  document.getElementById('hint').textContent = W.t('hint');
+  render();
+  clearInterval(timer);
+  timer = setInterval(render, 1000);
+}
+document.body.addEventListener('click', () => { W.save({ ...W.cfg, h12: !W.cfg.h12 }); render(); });
+W.send({ type: 'ready' });
+</script>
+</body>
+</html>

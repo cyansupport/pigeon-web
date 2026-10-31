@@ -1,0 +1,263 @@
+{
+  "version": 1,
+  "updated": "2026-10-31T10:37:20.313Z",
+  "widgets": [
+    {
+      "id": "clock",
+      "icon": "🕒",
+      "w": 1,
+      "name": {
+        "en": "Clock",
+        "pl": "Zegar",
+        "de": "Uhr",
+        "es": "Reloj",
+        "fr": "Horloge",
+        "pt": "Relógio"
+      },
+      "desc": {
+        "en": "Big, clean time and date.",
+        "pl": "Duża, czytelna godzina i data.",
+        "de": "Große, klare Uhrzeit und Datum.",
+        "es": "Hora y fecha grandes y claras.",
+        "fr": "Heure et date en grand.",
+        "pt": "Hora e data grandes e limpas."
+      },
+      "version": "1.0.0",
+      "file": "widgets/clock/widget.html",
+      "size": 3047,
+      "sha256": "20a4676aab9bb1a2d8e829c7e34fcfbc87e8bb02e4a6cd59caf4bcd896807c20"
+    },
+    {
+      "id": "weather",
+      "icon": "⛅",
+      "w": 1,
+      "name": {
+        "en": "Weather",
+        "pl": "Pogoda",
+        "de": "Wetter",
+        "es": "Tiempo",
+        "fr": "Météo",
+        "pt": "Tempo"
+      },
+      "desc": {
+        "en": "Current weather and 3-day forecast for your city.",
+        "pl": "Aktualna pogoda i prognoza na 3 dni dla Twojego miasta.",
+        "de": "Aktuelles Wetter und 3-Tage-Vorhersage für deine Stadt.",
+        "es": "El tiempo actual y la previsión de 3 días para tu ciudad.",
+        "fr": "Météo actuelle et prévisions sur 3 jours pour votre ville.",
+        "pt": "Tempo atual e previsão de 3 dias para sua cidade."
+      },
+      "version": "1.0.0",
+      "file": "widgets/weather/widget.html",
+      "size": 7001,
+      "sha256": "bb642da0ef9638398530d71d01343682003cdf369da401685bb030057b072ef6"
+    },
+    {
+      "id": "notes",
+      "icon": "📝",
+      "w": 1,
+      "name": {
+        "en": "Notes",
+        "pl": "Notatki",
+        "de": "Notizen",
+        "es": "Notas",
+        "fr": "Notes",
+        "pt": "Notas"
+      },
+      "desc": {
+        "en": "A quick note that saves as you type.",
+        "pl": "Szybka notatka zapisywana podczas pisania.",
+        "de": "Eine schnelle Notiz, die beim Tippen speichert.",
+        "es": "Una nota rápida que se guarda mientras escribes.",
+        "fr": "Une note rapide enregistrée pendant la saisie.",
+        "pt": "Uma nota rápida que salva enquanto você digita."
+      },
+      "version": "1.0.0",
+      "file": "widgets/notes/widget.html",
+      "size": 2766,
+      "sha256": "6dc2b931287a93af33e12710e2c4f7a05027bf5319fd1a824ce47ba0b16a65eb"
+    },
+    {
+      "id": "todo",
+      "icon": "✅",
+      "w": 1,
+      "name": {
+        "en": "To-do",
+        "pl": "Do zrobienia",
+        "de": "Aufgaben",
+        "es": "Tareas",
+        "fr": "À faire",
+        "pt": "Tarefas"
+      },
+      "desc": {
+        "en": "A simple checklist for today.",
+        "pl": "Prosta lista zadań na dziś.",
+        "de": "Eine einfache Checkliste für heute.",
+        "es": "Una lista sencilla para hoy.",
+        "fr": "Une liste simple pour aujourd’hui.",
+        "pt": "Uma lista simples para hoje."
+      },
+      "version": "1.0.0",
+      "file": "widgets/todo/widget.html",
+      "size": 4465,
+      "sha256": "0c56711ac9e43af0394206ca437a5e722d69020ae246fd1d6f9e0784621894d3"
+    },
+    {
+      "id": "pomodoro",
+      "icon": "🍅",
+      "w": 1,
+      "name": {
+        "en": "Focus timer",
+        "pl": "Minutnik skupienia",
+        "de": "Fokus-Timer",
+        "es": "Temporizador",
+        "fr": "Minuteur",
+        "pt": "Timer de foco"
+      },
+      "desc": {
+        "en": "25 minutes of focus, 5 minutes of break.",
+        "pl": "25 minut skupienia, 5 minut przerwy.",
+        "de": "25 Minuten Fokus, 5 Minuten Pause.",
+        "es": "25 minutos de concentración, 5 de descanso.",
+        "fr": "25 minutes de concentration, 5 de pause.",
+        "pt": "25 minutos de foco, 5 de pausa."
+      },
+      "version": "1.0.0",
+      "file": "widgets/pomodoro/widget.html",
+      "size": 4553,
+      "sha256": "7477bbeb0ce233eaa7f74a70d0fbf2bb711a2f46908e3534c2aa48d6af1cc0d5"
+    },
+    {
+      "id": "calendar",
+      "icon": "📅",
+      "w": 1,
+      "name": {
+        "en": "Calendar",
+        "pl": "Kalendarz",
+        "de": "Kalender",
+        "es": "Calendario",
+        "fr": "Calendrier",
+        "pt": "Calendário"
+      },
+      "desc": {
+        "en": "This month at a glance.",
+        "pl": "Bieżący miesiąc w skrócie.",
+        "de": "Dieser Monat auf einen Blick.",
+        "es": "Este mes de un vistazo.",
+        "fr": "Ce mois-ci en un coup d’œil.",
+        "pt": "Este mês num relance."
+      },
+      "version": "1.0.0",
+      "file": "widgets/calendar/widget.html",
+      "size": 3738,
+      "sha256": "ba5d5469d37322a51a3e5f31f46811c30d677992a121e983036db3d797fa604d"
+    }
+  ],
+  "wallpapers": [
+    {
+      "id": "aurora",
+      "name": {
+        "en": "Aurora",
+        "pl": "Zorza",
+        "de": "Polarlicht",
+        "es": "Aurora",
+        "fr": "Aurore",
+        "pt": "Aurora"
+      },
+      "file": "wallpapers/aurora.jpg",
+      "size": 349444,
+      "sha256": "528f716a3a40710fb81e2f236f1215a87e25f780ce3e8e227335d6cd9d93810a",
+      "thumb": "wallpapers/aurora-thumb.jpg"
+    },
+    {
+      "id": "sunset-dunes",
+      "name": {
+        "en": "Sunset dunes",
+        "pl": "Wydmy o zachodzie",
+        "de": "Dünen im Abendrot",
+        "es": "Dunas al atardecer",
+        "fr": "Dunes au couchant",
+        "pt": "Dunas ao pôr do sol"
+      },
+      "file": "wallpapers/sunset-dunes.jpg",
+      "size": 202863,
+      "sha256": "31574afd5b9d7d8af8beaa0776aae5c927bb05b7f2fc17605c37249b59f22ce6",
+      "thumb": "wallpapers/sunset-dunes-thumb.jpg"
+    },
+    {
+      "id": "ocean",
+      "name": {
+        "en": "Moonlit ocean",
+        "pl": "Ocean w blasku księżyca",
+        "de": "Mondscheinmeer",
+        "es": "Océano a la luz de la luna",
+        "fr": "Océan au clair de lune",
+        "pt": "Oceano ao luar"
+      },
+      "file": "wallpapers/ocean.jpg",
+      "size": 220788,
+      "sha256": "fd77ccc295bc3df475f750740ec2ee3fb5424ac94a1f9d4fb74830780b9b468f",
+      "thumb": "wallpapers/ocean-thumb.jpg"
+    },
+    {
+      "id": "pigeon-sky",
+      "name": {
+        "en": "Pigeon sky",
+        "pl": "Gołębie niebo",
+        "de": "Taubenhimmel",
+        "es": "Cielo de palomas",
+        "fr": "Ciel de pigeons",
+        "pt": "Céu de pombos"
+      },
+      "file": "wallpapers/pigeon-sky.jpg",
+      "size": 185388,
+      "sha256": "3576c6bb4d084135550786e850065af137f28ee51b2ec5c7ef6ac03345191098",
+      "thumb": "wallpapers/pigeon-sky-thumb.jpg"
+    },
+    {
+      "id": "neon-grid",
+      "name": {
+        "en": "Neon grid",
+        "pl": "Neonowa siatka",
+        "de": "Neon-Raster",
+        "es": "Rejilla de neón",
+        "fr": "Grille néon",
+        "pt": "Grade neon"
+      },
+      "file": "wallpapers/neon-grid.jpg",
+      "size": 671188,
+      "sha256": "fe5596f56cc13fdca6dc86e0dbb713c1cb5f5783b63a0f6f758af6632bb357c3",
+      "thumb": "wallpapers/neon-grid-thumb.jpg"
+    },
+    {
+      "id": "night-mountains",
+      "name": {
+        "en": "Night mountains",
+        "pl": "Góry nocą",
+        "de": "Berge bei Nacht",
+        "es": "Montañas de noche",
+        "fr": "Montagnes la nuit",
+        "pt": "Montanhas à noite"
+      },
+      "file": "wallpapers/night-mountains.jpg",
+      "size": 203723,
+      "sha256": "e60306e010867bba96030a17954540d0516d7bbe0e14e194f601fde70c481b0e",
+      "thumb": "wallpapers/night-mountains-thumb.jpg"
+    },
+    {
+      "id": "misty-forest",
+      "name": {
+        "en": "Misty forest",
+        "pl": "Mglisty las",
+        "de": "Nebelwald",
+        "es": "Bosque brumoso",
+        "fr": "Forêt brumeuse",
+        "pt": "Floresta enevoada"
+      },
+      "file": "wallpapers/misty-forest.jpg",
+      "size": 441600,
+      "sha256": "2cf5df80d01441b480131b6ac80b72f3fd6aa0cca72ec0737ec84d7b5b0d1a0f",
+      "thumb": "wallpapers/misty-forest-thumb.jpg"
+    }
+  ]
+}

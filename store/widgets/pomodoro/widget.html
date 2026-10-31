@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  :root { --fg: #eceef5; --muted: #9aa0b4; --accent: #9b8cff; --ring: rgba(255,255,255,.1); --btn: rgba(255,255,255,.08); }
+  .light { --fg: #1d2030; --muted: #5d6478; --ring: rgba(0,0,0,.08); --btn: rgba(0,0,0,.06); }
+  html, body { margin: 0; height: 100%; background: transparent; color: var(--fg); overflow: hidden;
+    font: 13px/1.3 "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif; user-select: none; }
+  body { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+  .mode { font-weight: 700; font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: var(--accent); }
+  .wrap { position: relative; width: 104px; height: 104px; }
+  svg { width: 104px; height: 104px; transform: rotate(-90deg); }
+  circle { fill: none; stroke-width: 7; }
+  .bg { stroke: var(--ring); }
+  .fg { stroke: var(--accent); stroke-linecap: round; transition: stroke-dashoffset .4s linear; }
+  .time { position: absolute; inset: 0; display: grid; place-items: center; font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .btns { display: flex; gap: 6px; }
+  button { height: 28px; padding: 0 14px; border: 0; border-radius: 14px; background: var(--btn); color: var(--fg);
+    font: 600 12.5px inherit; font-family: inherit; cursor: pointer; }
+  button.primary { background: var(--accent); color: #fff; }
+</style>
+</head>
+<body>
+  <div class="mode" id="mode"></div>
+  <div class="wrap">
+    <svg viewBox="0 0 104 104"><circle class="bg" cx="52" cy="52" r="46"/><circle class="fg" id="arc" cx="52" cy="52" r="46"/></svg>
+    <div class="time" id="time"></div>
+  </div>
+  <div class="btns"><button class="primary" id="go"></button><button id="reset"></button></div>
+<script>
+const T = {
+  en: { focus: 'Focus', break: 'Break', start: 'Start', pause: 'Pause', reset: 'Reset' },
+  pl: { focus: 'Skupienie', break: 'Przerwa', start: 'Start', pause: 'Pauza', reset: 'Reset' },
+  de: { focus: 'Fokus', break: 'Pause', start: 'Start', pause: 'Anhalten', reset: 'Zurücksetzen' },
+  es: { focus: 'Concentración', break: 'Descanso', start: 'Iniciar', pause: 'Pausa', reset: 'Reiniciar' },
+  fr: { focus: 'Concentration', break: 'Pause', start: 'Démarrer', pause: 'Pause', reset: 'Réinitialiser' },
+  pt: { focus: 'Foco', break: 'Pausa', start: 'Iniciar', pause: 'Pausar', reset: 'Reiniciar' }
+};
+const W = {
+  lang: 'en',
+  send(m) { parent.postMessage(Object.assign({ pigeonWidget: true }, m), '*'); },
+  t(k) { return (T[this.lang] || T.en)[k] || T.en[k]; }
+};
+const LEN = { focus: 25 * 60, break: 5 * 60 };
+const C = 2 * Math.PI * 46;
+const arc = document.getElementById('arc');
+arc.style.strokeDasharray = C;
+let mode = 'focus', left = LEN.focus, endsAt = 0, tick = null;
+
+function render() {
+  const m = Math.floor(left / 60), s = Math.floor(left % 60);
+  document.getElementById('time').textContent = `${m}:${String(s).padStart(2, '0')}`;
+  document.getElementById('mode').textContent = W.t(mode);
+  document.getElementById('go').textContent = W.t(tick ? 'pause' : 'start');
+  document.getElementById('reset').textContent = W.t('reset');
+  arc.style.strokeDashoffset = C * (1 - left / LEN[mode]);
+}
+function beep() {
+  try {
+    const ac = new AudioContext();
+    [0, 0.25, 0.5].forEach((d) => {
+      const o = ac.createOscillator(), g = ac.createGain();
+      o.frequency.value = 880; g.gain.value = 0.15;
+      o.connect(g).connect(ac.destination);
+      o.start(ac.currentTime + d); o.stop(ac.currentTime + d + 0.15);
+    });
+  } catch { /* audio unavailable */ }
+}
+function step() {
+  left = Math.max(0, (endsAt - Date.now()) / 1000);
+  if (left <= 0) {
+    beep();
+    mode = mode === 'focus' ? 'break' : 'focus';
+    left = LEN[mode];
+    endsAt = Date.now() + left * 1000;
+  }
+  render();
+}
+document.getElementById('go').addEventListener('click', () => {
+  if (tick) { clearInterval(tick); tick = null; }
+  else { endsAt = Date.now() + left * 1000; tick = setInterval(step, 250); }
+  render();
+});
+document.getElementById('reset').addEventListener('click', () => {
+  clearInterval(tick); tick = null; left = LEN[mode]; render();
+});
+addEventListener('message', (e) => {
+  const m = e.data;
+  if (!m || !m.pigeonHost || m.type !== 'init') return;
+  W.lang = m.lang || 'en';
+  document.documentElement.classList.toggle('light', m.theme === 'light');
+  if (m.accent) document.documentElement.style.setProperty('--accent', m.accent);
+  render();
+});
+render();
+W.send({ type: 'ready' });
+</script>
+</body>
+</html>

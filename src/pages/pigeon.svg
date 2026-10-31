@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <defs>
+    <linearGradient id="body" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#a9b8dc"/>
+      <stop offset="1" stop-color="#5d6c93"/>
+    </linearGradient>
+    <linearGradient id="neck" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#34d3b4"/>
+      <stop offset="1" stop-color="#9b6bff"/>
+    </linearGradient>
+  </defs>
+  <path d="M10 41 L1 50 L17 47 Z" fill="#46557a"/>
+  <path d="M9 41 C13 28 29 23 40 27 C49 30 51 40 46 46 C40 54 21 54 9 41 Z" fill="url(#body)"/>
+  <path d="M33 29 C34 21 39 15 46 15 C53 15 55 22 52 29 C49 35 42 37 38 34 Z" fill="url(#neck)"/>
+  <circle cx="47" cy="15" r="8" fill="#b4c2e3"/>
+  <path d="M54 13.5 L62 17 L54 18.5 Z" fill="#f2a65a"/>
+  <circle cx="49.5" cy="13.5" r="2.2" fill="#ff8a3d"/>
+  <circle cx="49.5" cy="13.5" r="1" fill="#1b1f2a"/>
+  <path d="M16 38 C23 31 34 31 41 37 C34 42 24 44 16 38 Z" fill="#6f7fa8"/>
+  <path d="M20 39 C26 36 32 36 37 38" stroke="#5a6990" stroke-width="1.4" fill="none" stroke-linecap="round"/>
+  <path d="M27 52 L26 59 M34 52 L35 59" stroke="#ec8a8a" stroke-width="2.4" stroke-linecap="round"/>
+</svg>

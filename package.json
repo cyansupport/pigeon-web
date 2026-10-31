@@ -1,0 +1,65 @@
+{
+  "name": "pigeon-web",
+  "productName": "Pigeon Web",
+  "version": "1.0.4",
+  "description": "Pigeon Web - a fast, private, Chromium-powered browser",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win --publish never",
+    "dist:mac": "electron-builder --mac --publish never",
+    "release": "electron-builder --win --publish always"
+  },
+  "build": {
+    "appId": "com.pigeonweb.browser",
+    "productName": "Pigeon Web",
+    "files": [
+      "src/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": "nsis"
+    },
+    "mac": {
+      "target": [
+        { "target": "dmg", "arch": ["universal"] },
+        { "target": "zip", "arch": ["universal"] }
+      ],
+      "category": "public.app-category.productivity",
+      "icon": "build/icon.png",
+      "identity": "-",
+      "hardenedRuntime": false,
+      "gatekeeperAssess": false,
+      "artifactName": "Pigeon-Web-${version}-mac.${ext}",
+      "extendInfo": {
+        "NSCameraUsageDescription": "Websites you allow can use your camera.",
+        "NSMicrophoneUsageDescription": "Websites you allow can use your microphone.",
+        "NSLocationUsageDescription": "Websites you allow can see your location.",
+        "NSLocationWhenInUseUsageDescription": "Websites you allow can see your location."
+      }
+    },
+    "dmg": {
+      "title": "Pigeon Web ${version}"
+    },
+    "publish": {
+      "provider": "github",
+      "owner": "cyansupport",
+      "repo": "pigeon-web",
+      "releaseType": "release"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "shortcutName": "Pigeon Web",
+      "artifactName": "Pigeon-Web-Setup-${version}.${ext}"
+    }
+  },
+  "devDependencies": {
+    "electron": "^45.1.0",
+    "electron-builder": "^26.18.0"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.11"
+  }
+}

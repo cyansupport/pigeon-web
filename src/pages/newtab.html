@@ -1,0 +1,681 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>New Tab</title>
+  <style>
+    :root {
+      --bg: #f3f4f9; --text: #1d2030; --muted: #5d6478; --card: #ffffff; --border: #dde1ea;
+      --glass: rgba(255, 255, 255, .78); --hover: rgba(0, 0, 0, .05);
+      --accent: #6d5cff; --glow1: rgba(109, 92, 255, .18); --glow2: rgba(52, 211, 180, .16);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #111319; --text: #e6e8ef; --muted: #8e94a6; --card: #1d2029; --border: #2b2f3b;
+        --glass: rgba(26, 29, 39, .72); --hover: rgba(255, 255, 255, .06);
+        --accent: #9b8cff; --glow1: rgba(155, 140, 255, .18); --glow2: rgba(52, 211, 180, .10);
+      }
+    }
+    html.goose { --accent: #e08a00; --glow1: rgba(245, 165, 36, .2); }
+    @media (prefers-color-scheme: dark) { html.goose { --accent: #f5a524; --glow1: rgba(245, 165, 36, .14); } }
+    /* With a wallpaper the page is always light-on-dark, whatever the system theme. */
+    html.has-wp {
+      --text: #fff; --muted: rgba(255, 255, 255, .78); --card: rgba(20, 22, 30, .55); --border: rgba(255, 255, 255, .16);
+      --glass: rgba(16, 18, 26, .5); --hover: rgba(255, 255, 255, .1);
+    }
+    html, body { margin: 0; min-height: 100%; }
+    body {
+      color: var(--text); overflow-x: hidden;
+      font-family: "Segoe UI Variable Display", "Segoe UI", system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(900px 520px at 12% -10%, var(--glow1), transparent 60%),
+        radial-gradient(800px 520px at 100% 110%, var(--glow2), transparent 60%),
+        var(--bg);
+      background-attachment: fixed;
+    }
+    #wp, #wp-dim { position: fixed; inset: 0; z-index: -1; pointer-events: none; }
+    #wp { background: center / cover no-repeat; opacity: 0; transition: opacity .4s; }
+    html.has-wp #wp { opacity: 1; }
+    html.has-wp body { background: #000; }
+    html.has-wp h1, html.has-wp .greet { text-shadow: 0 2px 12px rgba(0, 0, 0, .45); }
+    .page {
+      min-height: 100vh; box-sizing: border-box; padding: 72px 16px 64px;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .logo { width: 96px; height: 96px; cursor: pointer; filter: drop-shadow(0 10px 18px rgba(0, 0, 0, .18)); animation: bob 3.4s ease-in-out infinite; }
+    .logo.peck { animation: peck .5s ease-in-out 2; }
+    @keyframes bob {
+      0%, 100% { transform: translateY(0) rotate(0); }
+      25% { transform: translateY(-5px) rotate(-3deg); }
+      75% { transform: translateY(-2px) rotate(2deg); }
+    }
+    @keyframes peck { 50% { transform: rotate(18deg) translate(6px, 6px); } }
+    h1 { margin: 10px 0 4px; font-size: 36px; font-weight: 700; letter-spacing: -.02em; }
+    h1 span { color: var(--accent); }
+    .greet { margin-bottom: 28px; color: var(--muted); font-size: 15px; }
+    #search { position: relative; width: min(620px, 88vw); }
+    #search svg {
+      position: absolute; left: 20px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px;
+      fill: none; stroke: var(--muted); stroke-width: 2; stroke-linecap: round;
+    }
+    input {
+      width: 100%; height: 54px; box-sizing: border-box; padding: 0 22px 0 54px;
+      border: 1px solid var(--border); border-radius: 27px; outline: none;
+      background: var(--card); color: var(--text); font: inherit; font-size: 16px;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, .08); transition: border-color .15s, box-shadow .15s;
+    }
+    html.has-wp #q { backdrop-filter: blur(14px); }
+    input:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--glow1), 0 6px 24px rgba(0, 0, 0, .08); }
+    .tiles { display: grid; grid-template-columns: repeat(4, 112px); gap: 10px; margin-top: 36px; }
+    @media (max-width: 560px) { .tiles { grid-template-columns: repeat(2, 112px); } }
+    .tile {
+      position: relative; display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 6px 10px;
+      border-radius: 16px; color: var(--text); text-decoration: none; cursor: pointer;
+      transition: background .15s, transform .15s, box-shadow .15s;
+    }
+    .tile:hover { background: var(--card); box-shadow: 0 4px 16px rgba(0, 0, 0, .08); transform: translateY(-2px); }
+    .tile .del, .wcard .del {
+      position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border: 0; border-radius: 50%;
+      display: grid; place-items: center; background: transparent; color: var(--muted);
+      font: 16px/1 sans-serif; cursor: pointer; opacity: 0; transition: opacity .12s, background .12s; z-index: 2;
+    }
+    .tile:hover .del, .wcard:hover .del { opacity: 1; }
+    .tile .del:hover, .wcard .del:hover { background: var(--border); color: var(--text); }
+    .tile.add .ico { color: var(--muted); font-size: 26px; font-weight: 400; border-style: dashed; }
+    .tile.add:hover .ico { color: var(--accent); border-color: var(--accent); }
+    .ico {
+      display: grid; place-items: center; width: 48px; height: 48px; overflow: hidden; border-radius: 50%;
+      background: var(--card); border: 1px solid var(--border); color: var(--accent); font-size: 19px; font-weight: 700;
+    }
+    .ico img { width: 26px; height: 26px; }
+    .name {
+      max-width: 104px; overflow: hidden; font-size: 12.5px; line-height: 1.3; text-align: center;
+      display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow-wrap: anywhere;
+    }
+    html.has-wp .name { text-shadow: 0 1px 6px rgba(0, 0, 0, .6); }
+
+    /* ----- widgets ----- */
+    /* Widgets float on a full-window layer; each card is placed where the user dragged it. */
+    #widgets { position: fixed; inset: 0; z-index: 4; pointer-events: none; }
+    .wcard {
+      position: absolute; width: 210px; height: 196px; pointer-events: auto;
+      overflow: hidden; border-radius: 20px; background: var(--glass); border: 1px solid var(--border);
+      backdrop-filter: blur(16px); box-shadow: 0 8px 28px rgba(0, 0, 0, .12); animation: pop .25s ease-out;
+    }
+    .wcard.wide { width: 434px; }
+    .wcard iframe { width: 100%; height: 100%; border: 0; display: block; background: transparent; color-scheme: normal; }
+    .grip { position: absolute; top: 0; left: 0; right: 30px; height: 18px; z-index: 2; cursor: grab; display: flex; justify-content: center; touch-action: none; }
+    .grip::before { content: ""; width: 38px; height: 4px; margin-top: 6px; border-radius: 2px; background: var(--muted); opacity: 0; transition: opacity .15s; }
+    .wcard:hover .grip::before { opacity: .7; }
+    .wcard.dragging { z-index: 10; cursor: grabbing; box-shadow: 0 24px 60px rgba(0, 0, 0, .35); transform: scale(1.02); animation: none; }
+    .wcard.dragging .grip { cursor: grabbing; }
+    .wcard.dragging iframe { pointer-events: none; }
+    @keyframes pop { from { opacity: 0; transform: scale(.96); } }
+
+    /* ----- floating buttons ----- */
+    .pill {
+      position: fixed; top: 16px; display: flex; align-items: center; gap: 8px; padding: 8px 14px 8px 11px;
+      border-radius: 20px; font: 600 13px inherit; font-family: inherit; text-decoration: none; cursor: pointer;
+      transition: transform .15s, filter .15s; z-index: 5;
+    }
+    .pill:hover { transform: translateY(-1px); filter: brightness(1.08); }
+    .pill svg { width: 18px; height: 18px; }
+    .discord { right: 18px; background: #5865f2; color: #fff; border: 0; box-shadow: 0 4px 14px rgba(88, 101, 242, .35); }
+    .discord svg { fill: #fff; }
+    .customize { left: 18px; background: var(--glass); color: var(--text); border: 1px solid var(--border); backdrop-filter: blur(14px); }
+    .customize svg { fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .foot { margin-top: 40px; text-align: center; color: var(--muted); font-size: 12px; }
+    html.has-wp .foot { text-shadow: 0 1px 6px rgba(0, 0, 0, .6); }
+    kbd { padding: 1px 5px; border: 1px solid var(--border); border-radius: 4px; background: var(--card); font: inherit; font-size: 11px; }
+
+    /* ----- customize drawer (always uses the normal theme colors) ----- */
+    #drawer {
+      --text: #1d2030; --muted: #5d6478; --card: #fff; --border: #dde1ea; --hover: rgba(0, 0, 0, .05); --field: #eef0f5;
+      position: fixed; top: 0; right: 0; bottom: 0; width: min(400px, 100vw); z-index: 20; box-sizing: border-box;
+      display: flex; flex-direction: column; background: #f8f9fc; color: var(--text); border-left: 1px solid var(--border);
+      box-shadow: -20px 0 60px rgba(0, 0, 0, .25); transform: translateX(105%); transition: transform .25s ease;
+      font-family: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif; font-size: 13.5px;
+    }
+    @media (prefers-color-scheme: dark) {
+      #drawer { --text: #e6e8ef; --muted: #8e94a6; --card: #1d2029; --border: #2b2f3b; --hover: rgba(255, 255, 255, .06); --field: #15171d; background: #181a22; }
+    }
+    #drawer.open { transform: none; }
+    .dr-head { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px; }
+    .dr-head h2 { flex: 1; margin: 0; font-size: 17px; }
+    .seg { display: flex; margin: 0 14px 6px; padding: 3px; background: var(--field); border-radius: 11px; }
+    .seg button { flex: 1; padding: 7px 0; border: 0; border-radius: 9px; background: none; color: var(--muted); font: 600 13px inherit; font-family: inherit; cursor: pointer; }
+    .seg button.on { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0, 0, 0, .15); }
+    .xbtn { width: 30px; height: 30px; border: 0; border-radius: 8px; background: none; color: var(--muted); font-size: 20px; cursor: pointer; }
+    .xbtn:hover { background: var(--hover); color: var(--text); }
+    #dr-body { flex: 1; overflow-y: auto; padding: 4px 14px 24px; }
+    .sec { margin: 16px 2px 8px; color: var(--muted); font-size: 11px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+    .item { display: flex; align-items: center; gap: 12px; padding: 10px; border-radius: 12px; background: var(--card); border: 1px solid var(--border); margin-bottom: 8px; }
+    .item .emo { width: 40px; height: 40px; border-radius: 11px; display: grid; place-items: center; font-size: 22px; background: var(--field); flex: none; }
+    .item .meta { flex: 1; min-width: 0; }
+    .item .t { font-weight: 600; }
+    .item .s { color: var(--muted); font-size: 12px; margin-top: 1px; }
+    .acts { display: flex; flex-direction: column; gap: 4px; align-items: stretch; flex: none; }
+    .btn { height: 28px; padding: 0 12px; border: 0; border-radius: 14px; font: 600 12px inherit; font-family: inherit; cursor: pointer; white-space: nowrap;
+      background: var(--accent); color: #fff; }
+    .btn.ghost { background: var(--field); color: var(--text); }
+    .btn.danger { background: none; color: #e5484d; }
+    .btn.on { background: var(--field); color: var(--accent); }
+    .btn:disabled { opacity: .6; cursor: default; }
+    .note { color: var(--muted); padding: 10px 2px; }
+    .range { display: flex; align-items: center; gap: 12px; padding: 6px 2px 4px; }
+    .range input { flex: 1; height: auto; padding: 0; border: 0; box-shadow: none; accent-color: var(--accent); background: none; }
+    .wgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .wtile { position: relative; aspect-ratio: 16 / 10; border-radius: 12px; overflow: hidden; cursor: pointer; background: var(--field) center / cover;
+      border: 2px solid transparent; display: flex; align-items: flex-end; }
+    .wtile.active { border-color: var(--accent); box-shadow: 0 0 0 3px var(--glow1); }
+    .wtile .lbl { width: 100%; padding: 16px 8px 6px; font-size: 11.5px; font-weight: 600; color: #fff; background: linear-gradient(transparent, rgba(0, 0, 0, .65)); }
+    .wtile.plain { align-items: center; justify-content: center; flex-direction: column; gap: 4px; color: var(--muted); font-weight: 600; border: 2px dashed var(--border); }
+    .wtile.plain.active { border-style: solid; border-color: var(--accent); }
+    .wtile .size { position: absolute; top: 6px; left: 6px; padding: 2px 7px; border-radius: 8px; background: rgba(0, 0, 0, .55); color: #fff; font-size: 10.5px; font-weight: 700; }
+    .wtile .dl { position: absolute; top: 6px; right: 6px; padding: 2px 8px; border-radius: 8px; background: var(--accent); color: #fff; font-size: 10.5px; font-weight: 700; }
+    .wtile .rm { position: absolute; top: 4px; right: 4px; width: 22px; height: 22px; border: 0; border-radius: 50%; background: rgba(0, 0, 0, .55); color: #fff; cursor: pointer; opacity: 0; }
+    .wtile:hover .rm { opacity: 1; }
+    .wtile .prog { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0, 0, 0, .55); color: #fff; font-weight: 700; }
+    #scrim { position: fixed; inset: 0; z-index: 19; background: rgba(0, 0, 0, .25); display: none; }
+    #scrim.open { display: block; }
+    #toast { position: fixed; left: 50%; bottom: 48px; transform: translateX(-50%); z-index: 30; padding: 10px 16px; border-radius: 10px;
+      background: #1d2029; color: #fff; font-size: 13px; box-shadow: 0 10px 30px rgba(0, 0, 0, .35); }
+    #toast[hidden] { display: none; }
+
+    /* ----- add-shortcut dialog ----- */
+    dialog {
+      width: min(380px, 88vw); padding: 22px; border: 1px solid var(--border); border-radius: 18px;
+      background: var(--card); color: var(--text); box-shadow: 0 20px 60px rgba(0, 0, 0, .35);
+    }
+    html.has-wp dialog { background: #1d2029; }
+    dialog::backdrop { background: rgba(0, 0, 0, .35); }
+    dialog h2 { margin: 0 0 16px; font-size: 18px; }
+    dialog label { display: block; margin: 12px 0 6px; color: var(--muted); font-size: 12.5px; }
+    dialog input { height: 40px; padding: 0 14px; border-radius: 10px; box-shadow: none; font-size: 14px; }
+    dialog .err { min-height: 18px; margin-top: 10px; color: #ff6b6f; font-size: 12.5px; }
+    dialog .row { display: flex; justify-content: flex-end; gap: 8px; margin-top: 8px; }
+    dialog button {
+      height: 36px; padding: 0 18px; border: 0; border-radius: 18px; font: inherit; font-weight: 600; cursor: pointer;
+      background: var(--border); color: var(--text);
+    }
+    dialog button.primary { background: var(--accent); color: #fff; }
+  </style>
+</head>
+<body>
+  <div id="wp"></div>
+  <div id="wp-dim"></div>
+
+  <button class="pill customize" id="customize-btn">
+    <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>
+    <span data-i18n="customize">Customize</span>
+  </button>
+  <a class="pill discord" href="https://discord.gg/aymngeTrWY" title="Join our Discord">
+    <svg viewBox="0 0 24 24"><path d="M19.3 5.3A17 17 0 0 0 15 4l-.5 1a15.7 15.7 0 0 0-5 0L9 4a17 17 0 0 0-4.3 1.3C2 9.4 1.3 13.4 1.6 17.3A17.3 17.3 0 0 0 6.9 20l1.1-1.8c-.6-.2-1.2-.5-1.8-.9l.4-.3a12.3 12.3 0 0 0 10.8 0l.4.3c-.6.4-1.2.7-1.8.9L17.1 20a17.2 17.2 0 0 0 5.3-2.7c.4-4.5-.7-8.5-3.1-12zM8.7 14.9c-1 0-1.9-1-1.9-2.2s.8-2.2 1.9-2.2 1.9 1 1.9 2.2-.8 2.2-1.9 2.2zm6.6 0c-1 0-1.9-1-1.9-2.2s.8-2.2 1.9-2.2 1.9 1 1.9 2.2-.8 2.2-1.9 2.2z"/></svg>
+    <span data-i18n="joinOurDiscord">Join our Discord</span>
+  </a>
+
+  <main class="page">
+    <img class="logo" id="logo" src="pigeon.svg" alt="Pigeon Web" title="Coo!">
+    <h1><b id="bird">Pigeon</b> <span>Web</span></h1>
+    <div class="greet" id="greet"></div>
+    <form id="search">
+      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-4-4"/></svg>
+      <input id="q" placeholder="Search the web or type a URL" data-i18n-placeholder="ntSearchPlain" autocomplete="off" spellcheck="false">
+    </form>
+    <div class="tiles" id="tiles"></div>
+    <div class="foot">🛡️ <span id="foot-text">Trackers blocked automatically · <kbd>Ctrl</kbd>+<kbd>T</kbd> new tab · <kbd>Ctrl</kbd>+<kbd>L</kbd> address bar · <kbd>Ctrl</kbd>+<kbd>D</kbd> bookmark</span></div>
+  </main>
+  <div id="widgets"></div>
+
+  <div id="scrim"></div>
+  <aside id="drawer" aria-hidden="true">
+    <div class="dr-head">
+      <h2 data-i18n="customize">Customize</h2>
+      <button class="xbtn" id="dr-close" data-i18n-title="ctClose" title="Close">×</button>
+    </div>
+    <div class="seg">
+      <button data-tab="widgets" data-i18n="ctWidgets">Widgets</button>
+      <button data-tab="wallpapers" data-i18n="ctWallpapers">Wallpapers</button>
+    </div>
+    <div id="dr-body"></div>
+  </aside>
+  <div id="toast" hidden></div>
+
+  <dialog id="add-dialog">
+    <form id="add-form" method="dialog">
+      <h2 data-i18n="addShortcut">Add shortcut</h2>
+      <label for="add-name" data-i18n="name">Name</label>
+      <input id="add-name" maxlength="40" autocomplete="off" spellcheck="false" placeholder="e.g. YouTube" data-i18n-placeholder="egName">
+      <label for="add-url" data-i18n="webAddress">Web address</label>
+      <input id="add-url" autocomplete="off" spellcheck="false" placeholder="e.g. youtube.com" data-i18n-placeholder="egUrl">
+      <div class="err" id="add-err"></div>
+      <div class="row">
+        <button type="button" id="add-cancel" data-i18n="cancel">Cancel</button>
+        <button type="submit" class="primary" data-i18n="add">Add</button>
+      </div>
+    </form>
+  </dialog>
+
+  <script src="i18n.js"></script>
+  <script>
+    const P = window.pigeon;
+    const $ = (s) => document.querySelector(s);
+    const now = new Date();
+    const hr = now.getHours();
+    let lang = 'en';
+    let goose = false;
+    let t = PigeonI18n.make('en');
+
+    function el(tag, props = {}, ...kids) {
+      const n = document.createElement(tag);
+      for (const [k, v] of Object.entries(props)) {
+        if (v == null || v === false) continue;
+        if (k === 'class') n.className = v;
+        else if (k === 'text') n.textContent = v;
+        else if (k.startsWith('on')) n.addEventListener(k.slice(2), v);
+        else if (k === 'style') n.style.cssText = v;
+        else n.setAttribute(k, v === true ? '' : v);
+      }
+      n.append(...kids.flat().filter((c) => c != null && c !== false));
+      return n;
+    }
+
+    const setGreeting = () => {
+      const hello = hr < 5 ? t('greetNight', { birds: t(goose ? 'geese' : 'pigeons') })
+        : t(hr < 12 ? 'greetMorning' : hr < 18 ? 'greetAfternoon' : 'greetEvening');
+      $('#greet').textContent =
+        `${goose ? t('honk') + ' ' : ''}${hello} · ${now.toLocaleDateString(lang, { weekday: 'long', month: 'long', day: 'numeric' })}`;
+    };
+    const translatePage = () => {
+      document.documentElement.lang = lang;
+      document.title = t('newTab');
+      document.querySelectorAll('[data-i18n]').forEach((n) => { n.textContent = t(n.dataset.i18n); });
+      document.querySelectorAll('[data-i18n-placeholder]').forEach((n) => { n.placeholder = t(n.dataset.i18nPlaceholder); });
+      document.querySelectorAll('[data-i18n-title]').forEach((n) => { n.title = t(n.dataset.i18nTitle); });
+      $('.discord').title = t('joinOurDiscord');
+      $('#foot-text').innerHTML = t('ntFooter');
+    };
+
+    let toastTimer;
+    function toast(msg) {
+      $('#toast').textContent = msg;
+      $('#toast').hidden = false;
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => { $('#toast').hidden = true; }, 3000);
+    }
+
+    const pick = (map) => (map ? map[lang] || map.en || Object.values(map)[0] : '');
+    const formatSize = (n) => (n >= 1024 * 1024 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 102.4) / 10) + ' KB');
+
+    const logo = $('#logo');
+    logo.addEventListener('click', () => {
+      logo.classList.remove('peck');
+      void logo.offsetWidth;
+      logo.classList.add('peck');
+    });
+    logo.addEventListener('animationend', (e) => { if (e.animationName === 'peck') logo.classList.remove('peck'); });
+
+    const q = $('#q');
+    $('#search').addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (q.value.trim() && P) P.navigate(q.value.trim());
+    });
+
+    // ---------------- shortcuts ----------------
+    const MAX_SHORTCUTS = 12;
+    const tiles = $('#tiles');
+    const dialog = $('#add-dialog');
+
+    function tile(title, iconEl, extra) {
+      return el('a', { class: 'tile' }, el('div', { class: 'ico' }, iconEl), el('div', { class: 'name', text: title }), extra);
+    }
+
+    async function renderShortcuts() {
+      const list = await P.shortcuts();
+      tiles.replaceChildren();
+      for (const s of list) {
+        const letter = document.createTextNode((s.title || '?').trim()[0].toUpperCase());
+        const ico = el('img', { src: s.favicon || new URL('/favicon.ico', s.url).href, alt: '' });
+        ico.onerror = () => ico.replaceWith(letter);
+        const del = el('button', {
+          class: 'del', title: t('removeShortcut'), text: '×',
+          onclick: async (e) => { e.preventDefault(); e.stopPropagation(); await P.removeShortcut(s.url); renderShortcuts(); }
+        });
+        const a = tile(s.title, ico, del);
+        a.href = s.url;
+        a.title = s.url;
+        tiles.append(a);
+      }
+      if (list.length < MAX_SHORTCUTS) {
+        const add = tile(t('addShortcut'), document.createTextNode('+'));
+        add.classList.add('add');
+        add.addEventListener('click', () => {
+          $('#add-name').value = '';
+          $('#add-url').value = '';
+          $('#add-err').textContent = '';
+          dialog.showModal();
+          $('#add-name').focus();
+        });
+        tiles.append(add);
+      }
+    }
+    $('#add-cancel').addEventListener('click', () => dialog.close());
+    $('#add-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const r = await P.addShortcut({ title: $('#add-name').value, url: $('#add-url').value });
+      if (r.error) { $('#add-err').textContent = r.error; return; }
+      dialog.close();
+      renderShortcuts();
+    });
+
+    // ---------------- add-on state ----------------
+    let state = { widgets: [], wallpapers: [], layout: { widgets: [], wallpaper: null, dim: 0.35 } };
+    let store = null;           // null = not loaded yet, { error } when offline
+    const progress = new Map(); // "kind:id" -> percent
+
+    function setState(s) {
+      if (s && s.layout) state = s;
+      applyWallpaper();
+      mountWidgets();
+      renderDrawer();
+    }
+
+    // ---------------- wallpaper ----------------
+    function applyWallpaper() {
+      const m = state.wallpapers.find((w) => w.id === state.layout.wallpaper);
+      document.documentElement.classList.toggle('has-wp', !!m);
+      $('#wp').style.backgroundImage = m ? `url("pigeon://addons/wallpapers/${m.id}/${m.file}?v=${m.installedAt}")` : '';
+      $('#wp-dim').style.background = m ? `rgba(0,0,0,${state.layout.dim})` : 'transparent';
+    }
+
+    // ---------------- widgets (each runs sandboxed in its own iframe) ----------------
+    const frames = new Map(); // contentWindow -> widget id
+    let mountedKey = '';
+
+    function widgetTheme() {
+      const dark = document.documentElement.classList.contains('has-wp') || matchMedia('(prefers-color-scheme: dark)').matches;
+      return { theme: dark ? 'dark' : 'light', accent: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() };
+    }
+
+    function mountWidgets() {
+      const ids = state.layout.widgets.filter((id) => state.widgets.some((w) => w.id === id));
+      const key = ids.join(',') + '|' + lang + '|' + document.documentElement.classList.contains('has-wp');
+      if (key === mountedKey) return placeCards();
+      mountedKey = key;
+      const grid = $('#widgets');
+      frames.clear();
+      grid.replaceChildren();
+      for (const id of ids) {
+        const m = state.widgets.find((w) => w.id === id);
+        const frame = el('iframe', { sandbox: 'allow-scripts', title: pick(m.name), src: `pigeon://addons/widgets/${id}/widget.html?v=${m.installedAt}` });
+        const grip = el('div', { class: 'grip', title: t('ctDragHint') });
+        const card = el('div', { class: 'wcard' + (m.w === 2 ? ' wide' : ''), 'data-id': id },
+          grip,
+          el('button', { class: 'del', title: t('ctRemoveFromPage'), text: '×', onclick: () => toggleOnPage(id) }),
+          frame);
+        grip.addEventListener('pointerdown', (e) => startDrag(e, card, grip));
+        grid.append(card);
+        frames.set(frame.contentWindow, id);
+      }
+      placeCards();
+    }
+
+    // ---------------- free placement ----------------
+    const CARD_H = 196, GAP = 14, EDGE = 12, SNAP = 8;
+    const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
+    const room = (card) => ({ w: Math.max(1, innerWidth - card.offsetWidth - EDGE * 2), h: Math.max(1, innerHeight - card.offsetHeight - EDGE * 2) });
+
+    // Widgets the user hasn't moved yet go in centred rows along the bottom.
+    function defaultSpots(cards) {
+      const spots = new Map();
+      const maxRow = innerWidth - 48;
+      const rows = [[]];
+      let width = 0;
+      for (const c of cards) {
+        const w = c.offsetWidth;
+        if (rows[rows.length - 1].length && width + w > maxRow) { rows.push([]); width = 0; }
+        rows[rows.length - 1].push(c);
+        width += w + GAP;
+      }
+      rows.forEach((row, r) => {
+        const total = row.reduce((s, c) => s + c.offsetWidth, 0) + GAP * (row.length - 1);
+        let x = (innerWidth - total) / 2;
+        const y = innerHeight - 24 - CARD_H - r * (CARD_H + GAP);
+        for (const c of row) { spots.set(c.dataset.id, { left: x, top: y }); x += c.offsetWidth + GAP; }
+      });
+      return spots;
+    }
+
+    function placeCards() {
+      const cards = [...$('#widgets').children];
+      const saved = state.layout.positions || {};
+      const spots = defaultSpots(cards.filter((c) => !saved[c.dataset.id]));
+      for (const c of cards) {
+        if (c.classList.contains('dragging')) continue;
+        const r = room(c);
+        const p = saved[c.dataset.id];
+        const spot = p ? { left: EDGE + p.x * r.w, top: EDGE + p.y * r.h } : spots.get(c.dataset.id);
+        c.style.left = clamp(spot.left, EDGE, EDGE + r.w) + 'px';
+        c.style.top = clamp(spot.top, EDGE, EDGE + r.h) + 'px';
+      }
+    }
+    addEventListener('resize', placeCards);
+
+    function startDrag(e, card, grip) {
+      if (e.button !== 0) return;
+      e.preventDefault();
+      grip.setPointerCapture(e.pointerId);
+      const box = card.getBoundingClientRect();
+      const dx = e.clientX - box.left, dy = e.clientY - box.top;
+      card.classList.add('dragging');
+      const move = (ev) => {
+        const r = room(card);
+        card.style.left = clamp(Math.round((ev.clientX - dx) / SNAP) * SNAP, EDGE, EDGE + r.w) + 'px';
+        card.style.top = clamp(Math.round((ev.clientY - dy) / SNAP) * SNAP, EDGE, EDGE + r.h) + 'px';
+      };
+      let ended = false;
+      const end = async () => {
+        if (ended) return;
+        ended = true;
+        grip.removeEventListener('pointermove', move);
+        card.classList.remove('dragging');
+        const r = room(card);
+        const positions = { ...(state.layout.positions || {}) };
+        positions[card.dataset.id] = { x: (parseFloat(card.style.left) - EDGE) / r.w, y: (parseFloat(card.style.top) - EDGE) / r.h };
+        // Pin the others too, so their spot no longer depends on which widgets come and go.
+        for (const c of $('#widgets').children) {
+          if (positions[c.dataset.id]) continue;
+          const rr = room(c);
+          positions[c.dataset.id] = { x: (parseFloat(c.style.left) - EDGE) / rr.w, y: (parseFloat(c.style.top) - EDGE) / rr.h };
+        }
+        state.layout.positions = positions;
+        setState(await P.setLayout({ positions }));
+      };
+      grip.addEventListener('pointermove', move);
+      grip.addEventListener('pointerup', end, { once: true });
+      grip.addEventListener('pointercancel', end, { once: true });
+      grip.addEventListener('lostpointercapture', end, { once: true });
+    }
+
+    window.addEventListener('message', async (e) => {
+      const id = frames.get(e.source);
+      const m = e.data;
+      if (!id || !m || m.pigeonWidget !== true) return;
+      if (m.type === 'ready') {
+        const config = await P.widgetConfig(id);
+        e.source.postMessage({ pigeonHost: true, type: 'init', config, lang, goose, ...widgetTheme() }, '*');
+      } else if (m.type === 'save') {
+        P.saveWidgetConfig(id, m.config);
+      }
+    });
+
+    async function toggleOnPage(id) {
+      const on = state.layout.widgets.includes(id);
+      const widgets = on ? state.layout.widgets.filter((w) => w !== id) : [...state.layout.widgets, id];
+      setState(await P.setLayout({ widgets }));
+    }
+
+    // ---------------- customize drawer ----------------
+    let tab = 'widgets';
+    const drawer = $('#drawer');
+
+    async function openDrawer() {
+      drawer.classList.add('open');
+      $('#scrim').classList.add('open');
+      renderDrawer();
+      if (!store || store.error) { store = await P.store(!!store); renderDrawer(); }
+    }
+    function closeDrawer() { drawer.classList.remove('open'); $('#scrim').classList.remove('open'); }
+    $('#customize-btn').addEventListener('click', openDrawer);
+    $('#dr-close').addEventListener('click', closeDrawer);
+    $('#scrim').addEventListener('click', closeDrawer);
+    addEventListener('keydown', (e) => { if (e.key === 'Escape') closeDrawer(); });
+    document.querySelectorAll('.seg button').forEach((b) => b.addEventListener('click', () => { tab = b.dataset.tab; renderDrawer(); }));
+
+    async function install(kind, id, after) {
+      progress.set(`${kind}:${id}`, 0);
+      renderDrawer();
+      const r = await P.install(kind, id);
+      progress.delete(`${kind}:${id}`);
+      if (r.error) { toast(t('ctInstallFailed', { msg: r.error })); renderDrawer(); return; }
+      state = r;
+      if (after) return after();
+      setState(state);
+    }
+    async function uninstall(kind, id) { setState(await P.uninstall(kind, id)); }
+
+    let progressFrame = 0;
+    P && P.onInstallProgress(({ kind, id, p }) => {
+      progress.set(`${kind}:${id}`, p);
+      if (!progressFrame) progressFrame = requestAnimationFrame(() => { progressFrame = 0; renderDrawer(); });
+    });
+
+    function storeStatus() {
+      if (!store) return el('div', { class: 'note', text: '…' });
+      if (store.error) {
+        return el('div', { class: 'note' }, t('ctOffline'), ' ',
+          el('button', { class: 'btn ghost', text: t('ctRetry'), onclick: async () => { store = null; renderDrawer(); store = await P.store(true); renderDrawer(); } }));
+      }
+      return null;
+    }
+
+    function renderWidgetsTab(body) {
+      if (state.layout.widgets.length) {
+        body.append(el('div', { class: 'note' }, t('ctDragHint'), ' ',
+          Object.keys(state.layout.positions || {}).length
+            ? el('button', { class: 'btn ghost', text: t('ctResetLayout'), onclick: async () => setState(await P.setLayout({ positions: {} })) })
+            : null));
+      }
+      body.append(el('div', { class: 'sec', text: t('ctInstalled') }));
+      if (!state.widgets.length) body.append(el('div', { class: 'note', text: t('ctNoneInstalled') }));
+      for (const w of state.widgets) {
+        const on = state.layout.widgets.includes(w.id);
+        body.append(el('div', { class: 'item' },
+          el('div', { class: 'emo', text: w.icon || '🧩' }),
+          el('div', { class: 'meta' }, el('div', { class: 't', text: pick(w.name) }), el('div', { class: 's', text: formatSize(w.size) })),
+          el('div', { class: 'acts' },
+            el('button', { class: on ? 'btn on' : 'btn', text: on ? '✓ ' + t('ctOnPage') : '+ ' + t('ctAddToPage'), onclick: () => toggleOnPage(w.id) }),
+            el('button', { class: 'btn danger', text: t('ctUninstall'), onclick: () => uninstall('widgets', w.id) }))));
+      }
+      body.append(el('div', { class: 'sec', text: t('ctStore') }));
+      const status = storeStatus();
+      if (status) return body.append(status);
+      const available = (store.widgets || []).filter((w) => !state.widgets.some((x) => x.id === w.id));
+      if (!available.length) body.append(el('div', { class: 'note', text: t('ctAllInstalled') }));
+      for (const w of available) {
+        const p = progress.get(`widgets:${w.id}`);
+        body.append(el('div', { class: 'item', 'data-id': w.id },
+          el('div', { class: 'emo', text: w.icon || '🧩' }),
+          el('div', { class: 'meta' }, el('div', { class: 't', text: pick(w.name) }), el('div', { class: 's', text: pick(w.desc) })),
+          el('div', { class: 'acts' },
+            el('button', {
+              class: 'btn', disabled: p != null,
+              text: p != null ? t('ctInstalling', { p }) : `${t('ctInstall')} · ${formatSize(w.size)}`,
+              onclick: () => install('widgets', w.id, async () => setState(await P.setLayout({ widgets: [...state.layout.widgets, w.id] })))
+            }))));
+      }
+    }
+
+    function renderWallpapersTab(body) {
+      const range = el('input', { type: 'range', min: '0', max: '80', value: String(Math.round(state.layout.dim * 100)) });
+      range.addEventListener('input', () => {
+        state.layout.dim = range.value / 100;
+        if (state.layout.wallpaper) $('#wp-dim').style.background = `rgba(0,0,0,${state.layout.dim})`;
+      });
+      range.addEventListener('change', () => P.setLayout({ dim: range.value / 100 }));
+      body.append(el('div', { class: 'range' }, el('span', { text: t('ctDarken') }), range));
+
+      const grid = el('div', { class: 'wgrid' });
+      const setWp = async (id) => setState(await P.setLayout({ wallpaper: id }));
+      grid.append(el('div', { class: 'wtile plain' + (!state.layout.wallpaper ? ' active' : ''), onclick: () => setWp(null) },
+        el('span', { text: '∅' }), el('span', { text: t('ctNoWallpaper') })));
+      for (const w of state.wallpapers) {
+        grid.append(el('div', {
+          class: 'wtile' + (state.layout.wallpaper === w.id ? ' active' : ''),
+          style: `background-image:url("pigeon://addons/wallpapers/${w.id}/${w.file}?v=${w.installedAt}")`,
+          onclick: () => setWp(w.id)
+        },
+          el('button', { class: 'rm', title: t('ctUninstall'), text: '×', onclick: (e) => { e.stopPropagation(); uninstall('wallpapers', w.id); } }),
+          el('div', { class: 'lbl', text: w.custom ? t('ctCustom') : pick(w.name) })));
+      }
+      grid.append(el('div', {
+        class: 'wtile plain',
+        onclick: async () => { const r = await P.customWallpaper(); if (r.error) toast(t('ctInstallFailed', { msg: r.error })); else setState(r); }
+      }, el('span', { text: '＋' }), el('span', { text: t('ctUploadOwn') })));
+      body.append(el('div', { class: 'sec', text: t('ctInstalled') }), grid);
+
+      body.append(el('div', { class: 'sec', text: t('ctStore') }));
+      const status = storeStatus();
+      if (status) return body.append(status);
+      const available = (store.wallpapers || []).filter((w) => !state.wallpapers.some((x) => x.id === w.id));
+      if (!available.length) return body.append(el('div', { class: 'note', text: t('ctAllInstalled') }));
+      const sgrid = el('div', { class: 'wgrid' });
+      for (const w of available) {
+        const p = progress.get(`wallpapers:${w.id}`);
+        sgrid.append(el('div', {
+          class: 'wtile', 'data-id': w.id, style: w.thumbUrl ? `background-image:url("${w.thumbUrl}")` : '',
+          title: `${t('ctInstall')} · ${formatSize(w.size)}`,
+          onclick: () => p == null && install('wallpapers', w.id, () => setWp(w.id))
+        },
+          el('span', { class: 'size', text: formatSize(w.size) }),
+          el('span', { class: 'dl', text: '↓ ' + t('ctInstall') }),
+          p != null ? el('div', { class: 'prog', text: `${p}%` }) : null,
+          el('div', { class: 'lbl', text: pick(w.name) })));
+      }
+      body.append(sgrid);
+    }
+
+    function renderDrawer() {
+      if (!drawer.classList.contains('open')) return;
+      document.querySelectorAll('.seg button').forEach((b) => b.classList.toggle('on', b.dataset.tab === tab));
+      const body = $('#dr-body');
+      const scroll = body.scrollTop;
+      body.replaceChildren();
+      (tab === 'widgets' ? renderWidgetsTab : renderWallpapersTab)(body);
+      body.scrollTop = scroll;
+    }
+
+    // ---------------- start ----------------
+    setGreeting();
+    if (P) {
+      P.info().then(async (i) => {
+        lang = i.lang || 'en';
+        goose = !!i.goose;
+        t = PigeonI18n.make(lang, { mac: i.platform === 'darwin' });
+        translatePage();
+        q.placeholder = t('ntSearch', { engine: i.engine });
+        setGreeting();
+        renderShortcuts();
+        if (goose) {
+          document.documentElement.classList.add('goose');
+          logo.src = 'goose.svg';
+          logo.alt = 'Goose Web';
+          logo.title = 'HONK!';
+          $('#bird').textContent = 'Goose';
+        }
+        setState(await P.addons());
+      });
+    }
+  </script>
+</body>
+</html>
