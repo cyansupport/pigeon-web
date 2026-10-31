@@ -1,16 +1,21 @@
 # Builds the macOS app (Intel + Apple Silicon) on GitHub's Mac runners and
-# attaches it to the release. Runs automatically when a release is published,
-# or by hand from the Actions tab (enter the release tag, e.g. v1.0.5).
+# attaches it to a release. Runs when a release is published, when this file
+# changes on main (builds the latest release), or by hand from the Actions tab.
+# The version comes from the release's Windows installer name
+# (Pigeon-Web-Setup-X.Y.Z.exe), so release tags can be named anything.
 name: Build macOS app
 
 on:
   release:
     types: [published]
+  push:
+    branches: [main]
+    paths: ['.github/workflows/build-mac.yml']
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag to attach the Mac build to (for example v1.0.5)
-        required: true
+        description: Release tag to build for (leave empty for the latest release)
+        required: false
 
 permissions:
   contents: write
@@ -18,8 +23,6 @@ permissions:
 jobs:
   mac:
     runs-on: macos-latest
-    env:
-      TAG: ${{ github.event.release.tag_name || inputs.tag }}
     steps:
       - uses: actions/checkout@v4
 
@@ -28,11 +31,25 @@ jobs:
           node-version: 22
           cache: npm
 
+      - name: Find the release and its version
+        id: rel
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          if [ -z "$TAG" ]; then TAG=$(gh release view --json tagName -q .tagName); fi
+          VERSION=$(gh release view "$TAG" --json assets -q '.assets[].name' \
+            | sed -n 's/^Pigeon-Web-Setup-\([0-9][0-9.]*\)\.exe$/\1/p' | head -n 1)
+          if [ -z "$VERSION" ]; then VERSION=$(echo "$TAG" | sed 's/^[vV]//'); fi
+          echo "Building version $VERSION for release $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Install
         run: npm ci
 
-      - name: Use the release's version number
-        run: npm version "${TAG#v}" --no-git-tag-version --allow-same-version
+      - name: Set the app version
+        run: npm version "${{ steps.rel.outputs.version }}" --no-git-tag-version --allow-same-version
 
       - name: Build
         run: npx electron-builder --mac --publish never
@@ -40,6 +57,6 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: false
 
       - name: Attach to the release
-        run: gh release upload "$TAG" dist/*.dmg dist/*.zip dist/*.blockmap dist/latest-mac.yml --clobber
         env:
           GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ steps.rel.outputs.tag }}" dist/*.dmg dist/*.zip dist/*.blockmap dist/latest-mac.yml --clobber
