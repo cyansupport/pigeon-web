@@ -33,7 +33,7 @@ const DEFAULTS = {
   widgetConfig: {},
   settings: {
     searchEngine: 'google', blockTrackers: true, showBookmarksBar: true,
-    discordRpc: false, discordShowSite: false, gooseMode: false, autoUpdate: true, language: 'auto'
+    discordRpc: false, discordShowSite: false, gooseMode: false, autoUpdate: true, language: 'auto', showDiscordButton: true
   },
   session: null,
   bounds: null,
@@ -676,7 +676,7 @@ function registerIpc() {
     if (patch.searchEngine in ENGINES) data.settings.searchEngine = patch.searchEngine;
     if (patch.language === 'auto' || patch.language in i18n.LANGS) data.settings.language = patch.language;
     const wasAuto = data.settings.autoUpdate;
-    for (const k of ['blockTrackers', 'showBookmarksBar', 'discordRpc', 'discordShowSite', 'gooseMode', 'autoUpdate']) {
+    for (const k of ['blockTrackers', 'showBookmarksBar', 'discordRpc', 'discordShowSite', 'gooseMode', 'autoUpdate', 'showDiscordButton']) {
       if (typeof patch[k] === 'boolean') data.settings[k] = patch[k];
     }
     save();
@@ -862,7 +862,8 @@ function registerIpc() {
     engine: (ENGINES[data.settings.searchEngine] || ENGINES.google).name,
     goose: data.settings.gooseMode,
     lang: appLang(),
-    platform: process.platform
+    platform: process.platform,
+    showDiscordButton: data.settings.showDiscordButton !== false
   }), { internal: true });
   handle('internal:navigate', (text) => send('navigate', String(text)), { internal: true });
 }

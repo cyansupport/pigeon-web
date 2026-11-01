@@ -461,7 +461,22 @@ let sugItems = [];
 let sugIndex = 0;
 let sugSeq = 0;
 
-els.address.addEventListener('focus', () => setTimeout(() => els.address.select(), 0));
+// Like Chrome: a plain click into the unfocused bar selects the whole address, a drag
+// selects just the dragged part, and clicks once it's focused place the cursor.
+// (Keyboard focus — Ctrl+L, F6 — selects everything via focusAddress().)
+// A drag is told apart by how far the mouse moved: on focus Chromium briefly restores the
+// previous selection, so the selection itself can't be trusted at mouseup.
+let clickToFocus = null;
+els.address.addEventListener('mousedown', (e) => {
+  clickToFocus = e.button === 0 && document.activeElement !== els.address ? { x: e.clientX, y: e.clientY } : null;
+});
+els.address.addEventListener('mouseup', (e) => {
+  if (clickToFocus && Math.hypot(e.clientX - clickToFocus.x, e.clientY - clickToFocus.y) < 4) {
+    e.preventDefault();
+    setTimeout(() => els.address.select(), 0);
+  }
+  clickToFocus = null;
+});
 els.address.addEventListener('blur', () => setTimeout(() => {
   hideSuggestions();
   if (!addressDirty) updateAddress(true);
@@ -749,6 +764,10 @@ function openMenu() {
       reopenMenu();
     }),
     sep(),
+    toggleRow(t('showDiscordButton'), settings.showDiscordButton !== false, async (on) => {
+      await setSetting({ showDiscordButton: on });
+      for (const tab of tabs) if (isNewTab(tab.url) && tab.ready) safe(() => tab.wv.reload());
+    }),
     toggleRow(t('discordStatus'), settings.discordRpc, async (on) => {
       await setSetting({ discordRpc: on });
       reopenMenu();

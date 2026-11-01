@@ -663,6 +663,7 @@
         goose = !!i.goose;
         t = PigeonI18n.make(lang, { mac: i.platform === 'darwin' });
         translatePage();
+        if (i.showDiscordButton === false) $('.discord').style.display = 'none';
         q.placeholder = t('ntSearch', { engine: i.engine });
         setGreeting();
         renderShortcuts();
