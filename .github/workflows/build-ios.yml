@@ -1,0 +1,75 @@
+# Builds the iPhone/iPad app as an unsigned .ipa (for sideloading with Sideloadly
+# or AltStore) on GitHub's Mac runners and attaches it to a release.
+# Runs when a release is published, when the iOS code changes on main (builds
+# for the latest release), or by hand from the Actions tab.
+name: Build iOS app
+
+on:
+  release:
+    types: [published]
+  push:
+    branches: [main]
+    paths: ['ios/**', '.github/workflows/build-ios.yml']
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag to build for (leave empty for the latest release)
+        required: false
+
+permissions:
+  contents: write
+
+jobs:
+  ios:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Find the release and its version
+        id: rel
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name || inputs.tag }}
+        run: |
+          if [ -z "$TAG" ]; then TAG=$(gh release view --json tagName -q .tagName); fi
+          VERSION=$(gh release view "$TAG" --json assets -q '.assets[].name' \
+            | sed -n 's/^Pigeon-Web-Setup-\([0-9][0-9.]*\)\.exe$/\1/p' | head -n 1)
+          if [ -z "$VERSION" ]; then VERSION=$(echo "$TAG" | sed 's/^[vV]//'); fi
+          echo "Building iOS version $VERSION for release $TAG"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Generate the Xcode project
+        run: |
+          brew install xcodegen
+          cd ios && xcodegen generate
+
+      - name: Build
+        run: |
+          cd ios
+          xcodebuild -project PigeonWeb.xcodeproj -target PigeonWeb -configuration Release \
+            -sdk iphoneos SYMROOT="$PWD/build" \
+            MARKETING_VERSION="${{ steps.rel.outputs.version }}" CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY="" \
+            build | tee build.log | grep -E "error:|warning: .*deprecated|BUILD" || true
+          test -d build/Release-iphoneos/PigeonWeb.app
+
+      # Turn compiler errors into annotations so they show on the run's summary page.
+      - name: Show compile errors
+        if: failure()
+        run: |
+          grep -E "error:" ios/build.log | sed 's|^.*/ios/||' | sort -u | head -40 | while IFS= read -r line; do
+            echo "::error::$line"
+          done
+
+      - name: Package the .ipa
+        run: |
+          cd ios
+          mkdir -p Payload
+          cp -R build/Release-iphoneos/PigeonWeb.app Payload/
+          zip -qry "Pigeon-Web-${{ steps.rel.outputs.version }}.ipa" Payload
+
+      - name: Attach to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ steps.rel.outputs.tag }}" ios/Pigeon-Web-*.ipa --clobber
