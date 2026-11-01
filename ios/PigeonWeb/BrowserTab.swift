@@ -95,7 +95,7 @@ final class BrowserTab: NSObject, ObservableObject, Identifiable, WKNavigationDe
         // Hand mail, phone, App Store and similar links to iOS.
         if let url = navigationAction.request.url, let scheme = url.scheme?.lowercased(),
            !["http", "https", "about", "data", "blob", "file", "javascript"].contains(scheme) {
-            UIApplication.shared.open(url)
+            UIApplication.shared.open(url, options: [:], completionHandler: nil)
             return .cancel
         }
         return .allow
