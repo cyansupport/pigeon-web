@@ -39,7 +39,8 @@ enum L10n {
             "invalidAddress": "That doesn’t look like a web address.",
             "greetMorning": "Good morning", "greetAfternoon": "Good afternoon", "greetEvening": "Good evening",
             "greetNight": "Up late? So are the {birds}", "pigeons": "pigeons", "geese": "geese", "honk": "Honk!",
-            "today": "Today", "earlier": "Earlier"
+            "today": "Today", "earlier": "Earlier",
+            "showWeather": "Weather on start page", "showWeatherInfo": "Uses your location to show the local weather.", "wx": "Clear|Partly cloudy|Fog|Drizzle|Rain|Snow|Showers|Thunderstorm"
         ],
         "pl": [
             "newTab": "Nowa karta", "newTabButton": "Nowa karta", "searchPlaceholder": "Szukaj lub wpisz adres",
@@ -57,7 +58,8 @@ enum L10n {
             "invalidAddress": "To nie wygląda na adres strony.",
             "greetMorning": "Dzień dobry", "greetAfternoon": "Dzień dobry", "greetEvening": "Dobry wieczór",
             "greetNight": "Nie śpisz? {birds} też nie", "pigeons": "Gołębie", "geese": "Gęsi", "honk": "Gę gę!",
-            "today": "Dzisiaj", "earlier": "Wcześniej"
+            "today": "Dzisiaj", "earlier": "Wcześniej",
+            "showWeather": "Pogoda na stronie startowej", "showWeatherInfo": "Używa Twojej lokalizacji, aby pokazać pogodę w okolicy.", "wx": "Bezchmurnie|Częściowe zachmurzenie|Mgła|Mżawka|Deszcz|Śnieg|Przelotne opady|Burza"
         ],
         "de": [
             "newTab": "Neuer Tab", "newTabButton": "Neuer Tab", "searchPlaceholder": "Suchen oder Adresse eingeben",
@@ -75,7 +77,8 @@ enum L10n {
             "invalidAddress": "Das sieht nicht nach einer Webadresse aus.",
             "greetMorning": "Guten Morgen", "greetAfternoon": "Guten Tag", "greetEvening": "Guten Abend",
             "greetNight": "Noch wach? Die {birds} auch", "pigeons": "Tauben", "geese": "Gänse", "honk": "Honk!",
-            "today": "Heute", "earlier": "Früher"
+            "today": "Heute", "earlier": "Früher",
+            "showWeather": "Wetter auf der Startseite", "showWeatherInfo": "Verwendet deinen Standort für das Wetter vor Ort.", "wx": "Klar|Teilweise bewölkt|Nebel|Nieselregen|Regen|Schnee|Schauer|Gewitter"
         ],
         "es": [
             "newTab": "Nueva pestaña", "newTabButton": "Nueva pestaña", "searchPlaceholder": "Busca o escribe una dirección",
@@ -93,7 +96,8 @@ enum L10n {
             "invalidAddress": "Eso no parece una dirección web.",
             "greetMorning": "Buenos días", "greetAfternoon": "Buenas tardes", "greetEvening": "Buenas noches",
             "greetNight": "¿Despierto aún? Las {birds} también", "pigeons": "palomas", "geese": "ocas", "honk": "¡Honk!",
-            "today": "Hoy", "earlier": "Antes"
+            "today": "Hoy", "earlier": "Antes",
+            "showWeather": "Tiempo en la página de inicio", "showWeatherInfo": "Usa tu ubicación para mostrar el tiempo local.", "wx": "Despejado|Parcialmente nublado|Niebla|Llovizna|Lluvia|Nieve|Chubascos|Tormenta"
         ],
         "fr": [
             "newTab": "Nouvel onglet", "newTabButton": "Nouvel onglet", "searchPlaceholder": "Rechercher ou saisir une adresse",
@@ -111,7 +115,8 @@ enum L10n {
             "invalidAddress": "Cela ne ressemble pas à une adresse web.",
             "greetMorning": "Bonjour", "greetAfternoon": "Bon après-midi", "greetEvening": "Bonsoir",
             "greetNight": "Encore debout ? Les {birds} aussi", "pigeons": "pigeons", "geese": "oies", "honk": "Honk !",
-            "today": "Aujourd’hui", "earlier": "Plus tôt"
+            "today": "Aujourd’hui", "earlier": "Plus tôt",
+            "showWeather": "Météo sur la page d’accueil", "showWeatherInfo": "Utilise votre position pour afficher la météo locale.", "wx": "Dégagé|Partiellement nuageux|Brouillard|Bruine|Pluie|Neige|Averses|Orage"
         ],
         "pt": [
             "newTab": "Nova guia", "newTabButton": "Nova guia", "searchPlaceholder": "Pesquise ou digite um endereço",
@@ -129,7 +134,8 @@ enum L10n {
             "invalidAddress": "Isso não parece um endereço web.",
             "greetMorning": "Bom dia", "greetAfternoon": "Boa tarde", "greetEvening": "Boa noite",
             "greetNight": "Acordado ainda? Os {birds} também", "pigeons": "pombos", "geese": "gansos", "honk": "Honk!",
-            "today": "Hoje", "earlier": "Antes"
+            "today": "Hoje", "earlier": "Antes",
+            "showWeather": "Tempo na página inicial", "showWeatherInfo": "Usa sua localização para mostrar o tempo local.", "wx": "Limpo|Parcialmente nublado|Neblina|Garoa|Chuva|Neve|Pancadas|Trovoada"
         ]
     ]
 }

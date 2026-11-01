@@ -54,6 +54,19 @@ struct AppSettings: Codable, Equatable {
     var blockTrackers = true
     var gooseMode = false
     var language = "auto"
+    var showWeather = true
+
+    init() {}
+
+    // Settings saved by an older version lack the newer keys; those keep their defaults.
+    init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        engine = try c.decodeIfPresent(SearchEngine.self, forKey: .engine) ?? .google
+        blockTrackers = try c.decodeIfPresent(Bool.self, forKey: .blockTrackers) ?? true
+        gooseMode = try c.decodeIfPresent(Bool.self, forKey: .gooseMode) ?? false
+        language = try c.decodeIfPresent(String.self, forKey: .language) ?? "auto"
+        showWeather = try c.decodeIfPresent(Bool.self, forKey: .showWeather) ?? true
+    }
 }
 
 /// Everything that is saved between launches.
@@ -82,6 +95,7 @@ final class BrowserStore: ObservableObject {
         }
     }
 
+    let weather = WeatherModel()
     private var ruleList: WKContentRuleList?
     private var loading = true
     private let storageKey = "pigeon.state.v1"

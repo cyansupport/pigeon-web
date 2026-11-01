@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updated": "2026-10-31T10:37:20.313Z",
+  "updated": "2026-11-01T19:53:02.720Z",
   "widgets": [
     {
       "id": "clock",
@@ -40,17 +40,17 @@
         "pt": "Tempo"
       },
       "desc": {
-        "en": "Current weather and 3-day forecast for your city.",
-        "pl": "Aktualna pogoda i prognoza na 3 dni dla Twojego miasta.",
-        "de": "Aktuelles Wetter und 3-Tage-Vorhersage für deine Stadt.",
-        "es": "El tiempo actual y la previsión de 3 días para tu ciudad.",
-        "fr": "Météo actuelle et prévisions sur 3 jours pour votre ville.",
-        "pt": "Tempo atual e previsão de 3 dias para sua cidade."
+        "en": "Current weather and 3-day forecast where you are, found automatically.",
+        "pl": "Aktualna pogoda i prognoza na 3 dni tam, gdzie jesteś – lokalizacja wykrywana automatycznie.",
+        "de": "Aktuelles Wetter und 3-Tage-Vorhersage für deinen Standort, automatisch erkannt.",
+        "es": "El tiempo actual y la previsión de 3 días para donde estés, detectado automáticamente.",
+        "fr": "Météo actuelle et prévisions sur 3 jours là où vous êtes, détecté automatiquement.",
+        "pt": "Tempo atual e previsão de 3 dias para onde você está, detectado automaticamente."
       },
       "version": "1.0.0",
       "file": "widgets/weather/widget.html",
-      "size": 7001,
-      "sha256": "bb642da0ef9638398530d71d01343682003cdf369da401685bb030057b072ef6"
+      "size": 9312,
+      "sha256": "c5c39c392ced6b393c76a4942cd36636befdc86c58de22f644c338ba2b6902f9"
     },
     {
       "id": "notes",

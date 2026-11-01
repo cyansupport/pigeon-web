@@ -264,6 +264,7 @@
     const hr = now.getHours();
     let lang = 'en';
     let goose = false;
+    let platform = '';
     let t = PigeonI18n.make('en');
 
     function el(tag, props = {}, ...kids) {
@@ -506,8 +507,26 @@
         e.source.postMessage({ pigeonHost: true, type: 'init', config, lang, goose, ...widgetTheme() }, '*');
       } else if (m.type === 'save') {
         P.saveWidgetConfig(id, m.config);
+      } else if (m.type === 'locate') {
+        const place = await locate();
+        e.source.postMessage({ pigeonHost: true, type: 'location', place }, '*');
       }
     });
+
+    // Widgets can't use location themselves (they're sandboxed), so the page finds it for them.
+    // On a Mac Chromium reads Location Services here (macOS asks once); Windows Location
+    // Services and the IP fallback are handled by the main process.
+    function macPosition() {
+      if (platform !== 'darwin' || !navigator.geolocation) return Promise.resolve(null);
+      return new Promise((resolve) => navigator.geolocation.getCurrentPosition(
+        (p) => resolve({ lat: p.coords.latitude, lon: p.coords.longitude }), () => resolve(null),
+        { timeout: 8000, maximumAge: 20 * 60e3 }));
+    }
+    let located = null;
+    function locate() {
+      located ??= macPosition().then((hint) => P.locate(hint)).finally(() => setTimeout(() => { located = null; }, 60e3));
+      return located;
+    }
 
     async function toggleOnPage(id) {
       const on = state.layout.widgets.includes(id);
@@ -661,6 +680,7 @@
       P.info().then(async (i) => {
         lang = i.lang || 'en';
         goose = !!i.goose;
+        platform = i.platform;
         t = PigeonI18n.make(lang, { mac: i.platform === 'darwin' });
         translatePage();
         if (i.showDiscordButton === false) $('.discord').style.display = 'none';

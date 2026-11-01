@@ -74,16 +74,32 @@ async function install(kind, id, onProgress = () => {}) {
   if (buf.length !== item.size || sha !== item.sha256) throw new Error('damaged');
 
   const dir = dirOf(kind, id);
+  const previous = readManifest(kind, id);
   fs.rmSync(dir, { recursive: true, force: true });
   fs.mkdirSync(dir, { recursive: true });
   const file = kind === 'widgets' ? 'widget.html' : 'image' + path.extname(item.file);
   fs.writeFileSync(path.join(dir, file), buf);
   const manifest = {
     id, kind, file, name: item.name, desc: item.desc || null, icon: item.icon || null, w: item.w || 1,
-    version: item.version || null, size: item.size, installedAt: Date.now()
+    version: item.version || null, size: item.size, sha256: item.sha256,
+    installedAt: (previous && previous.installedAt) || Date.now()
   };
   fs.writeFileSync(path.join(dir, 'manifest.json'), JSON.stringify(manifest));
   return manifest;
+}
+
+// Re-downloads installed widgets whose store copy has changed, so fixes and new
+// features reach people who installed a widget earlier. Wallpapers never change.
+async function updateWidgets() {
+  const index = await fetchStore(true);
+  const updated = [];
+  for (const m of installed('widgets')) {
+    const item = (index.widgets || []).find((x) => x.id === m.id);
+    if (item && item.sha256 !== m.sha256) {
+      try { await install('widgets', m.id); updated.push(m.id); } catch { /* try again next launch */ }
+    }
+  }
+  return updated;
 }
 
 function uninstall(kind, id) {
@@ -117,4 +133,4 @@ function resolveUrlPath(pathname) {
   return full.startsWith(root + path.sep) && fs.existsSync(full) ? full : null;
 }
 
-module.exports = { init, fetchStore, install, uninstall, installed, installCustomWallpaper, resolveUrlPath, readManifest, STORE_URL };
+module.exports = { init, fetchStore, install, updateWidgets, uninstall, installed, installCustomWallpaper, resolveUrlPath, readManifest, STORE_URL };

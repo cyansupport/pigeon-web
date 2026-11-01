@@ -34,8 +34,8 @@
       "extendInfo": {
         "NSCameraUsageDescription": "Websites you allow can use your camera.",
         "NSMicrophoneUsageDescription": "Websites you allow can use your microphone.",
-        "NSLocationUsageDescription": "Websites you allow can see your location.",
-        "NSLocationWhenInUseUsageDescription": "Websites you allow can see your location."
+        "NSLocationUsageDescription": "Shows the weather where you are on the new tab page, and lets websites you allow see your location.",
+        "NSLocationWhenInUseUsageDescription": "Shows the weather where you are on the new tab page, and lets websites you allow see your location."
       }
     },
     "dmg": {

@@ -268,6 +268,11 @@ struct SettingsList: View {
             Section {
                 Toggle(store.t("gooseMode"), isOn: $store.settings.gooseMode)
             }
+            Section {
+                Toggle(store.t("showWeather"), isOn: $store.settings.showWeather)
+            } footer: {
+                Text(store.t("showWeatherInfo"))
+            }
         }
         .navigationTitle(store.t("settings"))
     }

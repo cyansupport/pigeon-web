@@ -66,6 +66,11 @@ struct StartPage: View {
                 .padding(.horizontal, 20)
                 .padding(.top, 10)
 
+                if store.settings.showWeather {
+                    WeatherCard(weather: store.weather)
+                        .padding(.top, 6)
+                }
+
                 LazyVGrid(columns: columns, spacing: 16) {
                     ForEach(store.shortcuts) { shortcut in
                         Button { tab.load(shortcut.url) } label: {
@@ -108,6 +113,8 @@ struct StartPage: View {
             .padding(.bottom, 40)
         }
         .scrollDismissesKeyboard(.interactively)
+        .onAppear { if store.settings.showWeather { store.weather.refresh(lang: store.lang) } }
+        .onChange(of: store.settings.showWeather) { on in if on { store.weather.refresh(lang: store.lang) } }
         .background(
             LinearGradient(colors: [store.accent.opacity(0.2), Color(.systemBackground)], startPoint: .top, endPoint: .center)
                 .ignoresSafeArea()

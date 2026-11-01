@@ -16,6 +16,7 @@ if (location.protocol === 'pigeon:') {
     widgetConfig: (id) => ipcRenderer.invoke('internal:widget-config', id),
     saveWidgetConfig: (id, config) => ipcRenderer.invoke('internal:widget-config-save', id, config),
     customWallpaper: () => ipcRenderer.invoke('internal:custom-wallpaper'),
+    locate: (hint) => ipcRenderer.invoke('internal:locate', hint),
     onInstallProgress: (fn) => ipcRenderer.on('addon-progress', (_e, p) => fn(p))
   });
 }

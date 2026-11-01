@@ -23,17 +23,19 @@
   input:focus { border-color: var(--accent); }
   button { height: 32px; border: 0; border-radius: 10px; background: var(--accent); color: #fff; font: 600 13px inherit; font-family: inherit; cursor: pointer; }
   .msg { color: var(--muted); font-size: 12px; min-height: 14px; }
+  body > .msg { margin: auto 0; text-align: center; }
+  button.here { background: var(--field); color: var(--fg); border: 1px solid var(--line); }
 </style>
 </head>
 <body>
 <script>
 const T = {
-  en: { city: 'Your city', set: 'Show weather', notFound: 'City not found', error: 'Weather unavailable', change: 'Click to change city', codes: ['Clear', 'Partly cloudy', 'Fog', 'Drizzle', 'Rain', 'Snow', 'Showers', 'Thunderstorm'] },
-  pl: { city: 'Twoje miasto', set: 'Pokaż pogodę', notFound: 'Nie znaleziono miasta', error: 'Pogoda niedostępna', change: 'Kliknij, aby zmienić miasto', codes: ['Bezchmurnie', 'Częściowe zachmurzenie', 'Mgła', 'Mżawka', 'Deszcz', 'Śnieg', 'Przelotne opady', 'Burza'] },
-  de: { city: 'Deine Stadt', set: 'Wetter anzeigen', notFound: 'Stadt nicht gefunden', error: 'Wetter nicht verfügbar', change: 'Klicken, um die Stadt zu ändern', codes: ['Klar', 'Teilweise bewölkt', 'Nebel', 'Nieselregen', 'Regen', 'Schnee', 'Schauer', 'Gewitter'] },
-  es: { city: 'Tu ciudad', set: 'Ver el tiempo', notFound: 'Ciudad no encontrada', error: 'Tiempo no disponible', change: 'Haz clic para cambiar de ciudad', codes: ['Despejado', 'Parcialmente nublado', 'Niebla', 'Llovizna', 'Lluvia', 'Nieve', 'Chubascos', 'Tormenta'] },
-  fr: { city: 'Votre ville', set: 'Voir la météo', notFound: 'Ville introuvable', error: 'Météo indisponible', change: 'Cliquez pour changer de ville', codes: ['Dégagé', 'Partiellement nuageux', 'Brouillard', 'Bruine', 'Pluie', 'Neige', 'Averses', 'Orage'] },
-  pt: { city: 'Sua cidade', set: 'Ver o tempo', notFound: 'Cidade não encontrada', error: 'Tempo indisponível', change: 'Clique para mudar a cidade', codes: ['Limpo', 'Parcialmente nublado', 'Neblina', 'Garoa', 'Chuva', 'Neve', 'Pancadas', 'Trovoada'] }
+  en: { city: 'Your city', set: 'Show weather', notFound: 'City not found', error: 'Weather unavailable', useLocation: 'Use my location', locating: 'Finding your location…', change: 'Click to change city', codes: ['Clear', 'Partly cloudy', 'Fog', 'Drizzle', 'Rain', 'Snow', 'Showers', 'Thunderstorm'] },
+  pl: { city: 'Twoje miasto', set: 'Pokaż pogodę', notFound: 'Nie znaleziono miasta', error: 'Pogoda niedostępna', useLocation: 'Użyj mojej lokalizacji', locating: 'Szukam Twojej lokalizacji…', change: 'Kliknij, aby zmienić miasto', codes: ['Bezchmurnie', 'Częściowe zachmurzenie', 'Mgła', 'Mżawka', 'Deszcz', 'Śnieg', 'Przelotne opady', 'Burza'] },
+  de: { city: 'Deine Stadt', set: 'Wetter anzeigen', notFound: 'Stadt nicht gefunden', error: 'Wetter nicht verfügbar', useLocation: 'Meinen Standort verwenden', locating: 'Standort wird ermittelt…', change: 'Klicken, um die Stadt zu ändern', codes: ['Klar', 'Teilweise bewölkt', 'Nebel', 'Nieselregen', 'Regen', 'Schnee', 'Schauer', 'Gewitter'] },
+  es: { city: 'Tu ciudad', set: 'Ver el tiempo', notFound: 'Ciudad no encontrada', error: 'Tiempo no disponible', useLocation: 'Usar mi ubicación', locating: 'Buscando tu ubicación…', change: 'Haz clic para cambiar de ciudad', codes: ['Despejado', 'Parcialmente nublado', 'Niebla', 'Llovizna', 'Lluvia', 'Nieve', 'Chubascos', 'Tormenta'] },
+  fr: { city: 'Votre ville', set: 'Voir la météo', notFound: 'Ville introuvable', error: 'Météo indisponible', useLocation: 'Utiliser ma position', locating: 'Recherche de votre position…', change: 'Cliquez pour changer de ville', codes: ['Dégagé', 'Partiellement nuageux', 'Brouillard', 'Bruine', 'Pluie', 'Neige', 'Averses', 'Orage'] },
+  pt: { city: 'Sua cidade', set: 'Ver o tempo', notFound: 'Cidade não encontrada', error: 'Tempo indisponível', useLocation: 'Usar minha localização', locating: 'Procurando sua localização…', change: 'Clique para mudar a cidade', codes: ['Limpo', 'Parcialmente nublado', 'Neblina', 'Garoa', 'Chuva', 'Neve', 'Pancadas', 'Trovoada'] }
 };
 const W = {
   cfg: {}, lang: 'en',
@@ -43,13 +45,48 @@ const W = {
 };
 addEventListener('message', (e) => {
   const m = e.data;
-  if (!m || !m.pigeonHost || m.type !== 'init') return;
+  if (!m || !m.pigeonHost) return;
+  if (m.type === 'location') { gotLocation(m.place); return; }
+  if (m.type !== 'init') return;
   W.cfg = m.config || {};
   W.lang = m.lang || 'en';
   document.documentElement.classList.toggle('light', m.theme === 'light');
   if (m.accent) document.documentElement.style.setProperty('--accent', m.accent);
-  W.cfg.lat != null ? showWeather() : askCity();
+  start();
 });
+
+// The weather follows your location unless you typed in a city yourself.
+const auto = () => !W.cfg.manual;
+function start() { auto() ? locate() : showWeather(); }
+
+// Pigeon Web finds the location (Windows/Mac Location Services, else by IP). Older versions
+// of the browser don't answer, so after a while we look it up by IP ourselves.
+let waiting;
+function locate() {
+  if (W.cfg.lat != null) showWeather(); else document.body.replaceChildren(el('div', { className: 'msg', textContent: W.t('locating') }));
+  clearTimeout(waiting);
+  waiting = setTimeout(() => gotLocation(null), 15000);
+  W.send({ type: 'locate' });
+}
+async function gotLocation(place) {
+  if (!waiting) return;
+  clearTimeout(waiting);
+  waiting = null;
+  if (!place) {
+    try {
+      const r = await fetch('https://get.geojs.io/v1/ip/geo.json').then((x) => x.json());
+      if (r.latitude) place = { lat: Number(r.latitude), lon: Number(r.longitude), city: r.city || '' };
+    } catch { /* keep the last known place */ }
+  }
+  if (!auto()) return;
+  if (place) {
+    const moved = W.cfg.lat == null || Math.abs(place.lat - W.cfg.lat) > 0.01 || Math.abs(place.lon - W.cfg.lon) > 0.01 || place.city !== W.cfg.city;
+    if (moved) W.save({ city: place.city, lat: place.lat, lon: place.lon });
+    if (moved || !document.querySelector('.now')) showWeather();
+  } else if (W.cfg.lat == null) {
+    askCity(W.t('error'));
+  }
+}
 
 // WMO weather codes -> [icon, index into the translated "codes" list]
 function describe(code) {
@@ -70,9 +107,11 @@ function el(tag, props = {}, ...kids) {
 }
 
 function askCity(message = '') {
-  const input = el('input', { placeholder: W.t('city'), value: W.cfg.city || '' });
+  const input = el('input', { placeholder: W.t('city'), value: W.cfg.manual ? W.cfg.city || '' : '' });
   const msg = el('div', { className: 'msg', textContent: message });
-  const form = el('form', {}, input, el('button', { type: 'submit', textContent: W.t('set') }), msg);
+  const here = el('button', { type: 'button', className: 'here', textContent: '📍 ' + W.t('useLocation') });
+  here.addEventListener('click', () => { W.save({}); locate(); });
+  const form = el('form', {}, input, el('button', { type: 'submit', textContent: W.t('set') }), here, msg);
   form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const q = input.value.trim();
@@ -81,7 +120,7 @@ function askCity(message = '') {
       const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?count=1&language=${W.lang}&name=${encodeURIComponent(q)}`).then((x) => x.json());
       const place = r.results && r.results[0];
       if (!place) { msg.textContent = W.t('notFound'); return; }
-      W.save({ city: place.name, lat: place.latitude, lon: place.longitude });
+      W.save({ manual: true, city: place.name, lat: place.latitude, lon: place.longitude });
       showWeather();
     } catch { msg.textContent = W.t('error'); }
   });
@@ -92,14 +131,14 @@ function askCity(message = '') {
 let refresh;
 async function showWeather() {
   clearTimeout(refresh);
-  refresh = setTimeout(showWeather, 30 * 60e3);
+  refresh = setTimeout(start, 30 * 60e3);
   const { lat, lon, city } = W.cfg;
   try {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}` +
       '&current=temperature_2m,weather_code&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4';
     const d = await fetch(url).then((x) => x.json());
     const [icon, idx] = describe(d.current.weather_code);
-    const cityEl = el('div', { className: 'city', textContent: city, title: W.t('change') });
+    const cityEl = el('div', { className: 'city', textContent: (auto() ? '📍 ' : '') + (city || W.t('city')), title: W.t('change') });
     cityEl.addEventListener('click', () => askCity());
     const days = el('div', { className: 'days' });
     for (let i = 1; i < d.daily.time.length; i++) {

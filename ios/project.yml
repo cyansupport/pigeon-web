@@ -27,7 +27,7 @@ targets:
         INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad: "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight"
         INFOPLIST_KEY_NSCameraUsageDescription: Websites you allow can use your camera.
         INFOPLIST_KEY_NSMicrophoneUsageDescription: Websites you allow can use your microphone.
-        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: Websites you allow can see your location.
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: Shows the weather where you are on the start page, and lets websites you allow see your location.
         INFOPLIST_KEY_NSPhotoLibraryAddUsageDescription: Lets you save images from websites to Photos.
         CODE_SIGNING_ALLOWED: NO
         CODE_SIGNING_REQUIRED: NO

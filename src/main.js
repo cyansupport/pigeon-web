@@ -7,6 +7,7 @@ const crypto = require('crypto');
 const importer = require('./importer');
 const i18n = require('./pages/i18n');
 const addons = require('./addons');
+const { locate } = require('./locate');
 const { pathToFileURL } = require('url');
 const blocklist = require('./blocklist');
 const { DiscordPresence } = require('./discord');
@@ -323,6 +324,10 @@ function setupSession() {
 
   ses.setPermissionRequestHandler(async (wc, permission, callback, details) => {
     if (AUTO_ALLOW.has(permission)) return callback(true);
+    // The new tab page asks for location for the weather widget; macOS shows its own prompt.
+    if (permission === 'geolocation' && String(details.requestingUrl || wc.getURL()).startsWith('pigeon://newtab')) {
+      return callback(true);
+    }
     if (!ASKABLE.has(permission) || !win) return callback(false);
     let origin;
     try { origin = new URL(details.requestingUrl || wc.getURL()).origin; } catch { return callback(false); }
@@ -829,6 +834,10 @@ function registerIpc() {
     return addonState();
   });
   handleInternal('internal:widget-config', (_e, id) => data.widgetConfig[id] || {});
+  handleInternal('internal:locate', async (_e, hint) => {
+    const h = hint && typeof hint === 'object' ? { lat: Number(hint.lat), lon: Number(hint.lon) } : null;
+    try { return await locate({ lang: appLang(), hint: h }); } catch { return null; }
+  });
   handleInternal('internal:widget-config-save', (_e, id, config) => {
     if (!addons.readManifest('widgets', String(id))) return;
     const json = JSON.stringify(config ?? {});
@@ -916,6 +925,7 @@ if (!app.requestSingleInstanceLock()) {
     discord.setEnabled(data.settings.discordRpc);
     updatePresence();
     setupUpdater();
+    setTimeout(() => addons.updateWidgets().catch(() => {}), 8000);
   });
 
   app.on('activate', () => { if (!win) createWindow(); });
